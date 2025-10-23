@@ -19,6 +19,7 @@ Dependencies are defined in [pyproject.toml](pyproject.toml) and locked in `uv.l
 ## Running Code
 
 - **Run main script**: `uv run python main.py`
+- **Run Chainlit app**: `uv run chainlit run app.py`
 - **Run Jupyter notebooks**: Open `.ipynb` files in [notebooks/](notebooks/) directory using VS Code's Jupyter extension
 
 ## Project Structure
@@ -26,6 +27,23 @@ Dependencies are defined in [pyproject.toml](pyproject.toml) and locked in `uv.l
 - **DevContainer configuration**: [.devcontainer/](.devcontainer/) - Contains Dockerfile and devcontainer.json for containerized development
 - **Notebooks**: [notebooks/](notebooks/) - Jupyter notebooks for experimentation and demos
 - **Main entry point**: [main.py](main.py) - Simple Python script entry point
+- **Chainlit app**: [app.py](app.py) - Chainlit chatbot application
+- **Chainlit configuration**: [.chainlit/](.chainlit/) - Chainlit settings and translations
+
+## Chainlit Application
+
+This project includes a Chainlit-based conversational AI application:
+
+- **Main application**: [app.py](app.py) - Currently a simple echo bot that uses the `@cl.on_message` decorator
+- **Configuration**: [.chainlit/config.toml](.chainlit/config.toml) - UI settings, feature flags, and session management
+- **Welcome screen**: [chainlit.md](chainlit.md) - Markdown content shown when users first open the app
+- **Translations**: Only Japanese (`ja.json`) and English (`en-US.json`) are maintained; other languages were removed but can be restored from git history if needed
+
+### Chainlit Configuration Notes
+
+- Translation files use human-readable Japanese characters (not Unicode escapes) for maintainability
+- Runtime files (`.chainlit/*.db`, `.chainlit/.files/`, `.chainlit/cache/`) are gitignored
+- Configuration and translation files are version-controlled for team consistency
 
 ## Important Notes
 

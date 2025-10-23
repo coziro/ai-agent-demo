@@ -9,7 +9,8 @@
       "extensions": [
         "ms-python.python",
         "ms-toolsai.jupyter",
-        "anthropic.claude-code"
+        "anthropic.claude-code",
+        "tamasfe.even-better-toml"
       ]
     }
   }
