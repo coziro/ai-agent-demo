@@ -43,6 +43,9 @@ env/
 .chainlit/.files/
 .chainlit/cache/
 
+# Claude Code context (commit context files, ignore session notes if needed)
+# Currently all .claude/ files are committed for team collaboration
+
 # Jupyter Notebook
 .ipynb_checkpoints
 
