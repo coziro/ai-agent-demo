@@ -74,7 +74,7 @@
     3. JavaScriptでIME compositionイベントをハンドリング
   - 参考資料:
     - Qiita記事: https://qiita.com/bohemian916/items/4f3e860904c24922905a
-    - Chainlit Issue: https://github.com/Chainlit/chainlit/issues/1557
+    - 技術的背景: IME compositionStart/End イベントを使った対策が必要
   - 見積もり: 1-2時間（調査+実装+テスト）
   - 影響範囲: public/custom.js（新規）、.chainlit/config.toml
 
