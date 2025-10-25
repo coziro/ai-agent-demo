@@ -229,6 +229,62 @@
 **参考:**
 成功しているOSSプロジェクトの多くは、設計決定やADR（Architecture Decision Records）を公開しており、これがコミュニティの成長に貢献している。
 
+### LangChainの採用とシンプル実装の選択 - 2025-10-25
+
+**状況・課題:**
+- Chainlitアプリに実際のLLM機能を追加する必要があった
+- 将来的にはLangGraphを使ったAIエージェントを実装したい
+
+**検討した選択肢:**
+1. **OpenAI API直接使用**: シンプルだが、将来の拡張性に制限
+2. **LangChain使用**: 学習コストはあるが、LangGraphへの移行が容易
+3. **LangChain + LCEL**: 強力だが、初学者には複雑
+
+**決定内容:**
+- **LangChain + ChatOpenAI を採用**
+- **LCELは使わず、シンプルな実装から始める**
+- **gpt-5-nano モデルを使用**
+
+**理由:**
+- 将来的にLangGraphを使いたいため、LangChainのエコシステムに慣れる
+- OpenAI APIは過去に経験済みなので、新しい学びとしてLangChainを選択
+- LCELは複雑なパイプラインで真価を発揮するため、シンプルなチャットでは不要
+- まずは基礎を理解してから、必要に応じてLCELを導入する方針
+
+**技術的な学び:**
+- `ChatOpenAI` vs `OpenAI`: チャットモデル vs 補完モデル（レガシー）
+- `ainvoke()` vs `invoke()`: 非同期 vs 同期（async関数内ではainvokeを使う）
+- Pythonの非同期処理: `await`の必要性、イベントループ、ブロッキングの概念
+
+**実装パターン:**
+```python
+from langchain_openai import ChatOpenAI
+from langchain.messages import HumanMessage, SystemMessage
+
+model = ChatOpenAI(model="gpt-5-nano")
+system_msg = SystemMessage("You are a helpful assistant.")
+
+@cl.on_message
+async def main(message: cl.Message):
+    human_msg = HumanMessage(message.content)
+    response = await model.ainvoke([system_msg, human_msg])
+    await cl.Message(content=response.content).send()
+```
+
+**影響範囲:**
+- [app.py](../app.py) - メインアプリケーション
+- [pyproject.toml](../pyproject.toml) - langchain, langchain-openai 依存関係追加
+- .env - OPENAI_API_KEY 環境変数
+
+**参考資料:**
+- https://docs.langchain.com/oss/python/langchain/models
+- https://python.langchain.com/docs/integrations/chat/openai/
+
+**今後の展開:**
+1. まずはマルチターン会話（会話履歴の保持）
+2. ストリーミングレスポンス
+3. LangGraphを使ったエージェント実装
+
 ---
 
 ## 次に決めるべきこと
