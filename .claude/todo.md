@@ -62,6 +62,36 @@
 
 ### MVP後の改良・拡張
 
+#### 品質向上・開発環境改善
+
+- [ ] 日本語IME入力対応（Enterキー問題の修正）
+  - 問題: 日本語変換確定のEnterでメッセージが送信されてしまう
+  - 目的: 日本語ユーザーの使いやすさ向上
+  - 解決策: `public/custom.js` を作成してIME状態を追跡
+  - 手順:
+    1. `public/custom.js` ファイルを作成
+    2. `.chainlit/config.toml` に `custom_js = "/public/custom.js"` を追加
+    3. JavaScriptでIME compositionイベントをハンドリング
+  - 参考資料:
+    - Qiita記事: https://qiita.com/bohemian916/items/4f3e860904c24922905a
+    - Chainlit Issue: https://github.com/Chainlit/chainlit/issues/1557
+  - 見積もり: 1-2時間（調査+実装+テスト）
+  - 影響範囲: public/custom.js（新規）、.chainlit/config.toml
+
+- [ ] Ruff (linter/formatter) の導入
+  - 目的: コード品質の一貫性確保、自動フォーマット
+  - 影響範囲: pyproject.toml、VS Code設定、既存コードの修正
+  - 見積もり: 30分-1時間
+  - メモ: 早めに導入することで、今後のコード品質が向上
+
+- [ ] Loggingの仕組み導入
+  - 目的: デバッグ・運用時のトラブルシューティング
+  - 検討項目: loguru vs 標準logging
+  - 影響範囲: [app.py](../app.py)、設定ファイル
+  - 見積もり: 1時間
+
+#### 機能拡張
+
 - [ ] エラーハンドリングの追加
   - 目的: API エラー時の適切な処理
   - 見積もり: 1時間
