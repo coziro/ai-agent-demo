@@ -339,10 +339,47 @@ const [isComposing, setIsComposing] = useState(false);
 2. CI/CDにIMEテストが含まれていない
 3. フレームワークが適切にComposition Eventsを処理していない場合がある
 
-**決定内容（暫定）:**
-- **MVP後にQiitaの回避策を実装**（現実的な選択）
-- 理由: すぐに動作し、ユーザー体験を改善できる
-- 将来的な選択肢: Chainlitに貢献、または独自UIの検討
+**決定内容（2段階アプローチ）:**
+- **Phase 1: MVP後にQiitaの回避策を実装**（現実的な暫定対応）
+- **Phase 2: Chainlit本体への貢献**（推奨される根本解決）
+- 理由:
+  - Phase 1で即座にユーザー体験を改善
+  - Phase 2で全世界のユーザーに貢献し、暫定対応を不要にする
+
+**OSSコントリビューションの詳細（2025年10月25日追記）:**
+
+調査の結果、**ChainlitのGitHubに既に関連Issueが存在することを発見**:
+
+1. **Issue #2600** (2025-10-21): 中国語IME（Pinyin）の問題
+   - 状態: オープン、needs-triage
+   - 問題: Enterで変換確定と同時にメッセージ送信
+   - 原因: compositionstart/compositionendイベント処理の欠如
+   - 回避策: Shift+Enterで確定してからEnter送信
+   - URL: https://github.com/Chainlit/chainlit/issues/2600
+
+2. **Issue #2598** (2025-10-21): 韓国語IMEの問題
+   - 状態: オープン、needs-triage
+   - 問題: メッセージが2回送信される
+   - 原因: React.jsのIMEイベント処理のレースコンディション
+   - URL: https://github.com/Chainlit/chainlit/issues/2598
+
+**重要な発見:**
+- 日本語のIssueはまだ報告されていない
+- 日本語ユーザーはQiitaで回避策を共有しているため、GitHubに報告していない
+- 中国語・韓国語ユーザーは直接GitHubに報告している
+- 両Issueとも2025年10月21日から放置されている（PRなし）
+
+**コントリビューションの機会:**
+1. 既存Issue（#2600, #2598）に日本語でも発生すると報告
+2. 両Issueに👍リアクションで優先度を上げる
+3. Composition Events処理を実装したPRを作成
+4. 日本語・中国語・韓国語すべてで動作確認
+5. 全世界のIMEユーザーに貢献できる
+
+**技術的アプローチ:**
+- 場所: Chainlitのフロントエンド（React）の入力コンポーネント
+- 修正: `onCompositionStart/End`ハンドラを追加
+- 参考実装: references.mdに記載済み
 
 **参考資料:**
 - Qiita記事（回避策）: https://qiita.com/bohemian916/items/4f3e860904c24922905a

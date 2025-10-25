@@ -67,16 +67,46 @@
 - [ ] 日本語IME入力対応（Enterキー問題の修正）
   - 問題: 日本語変換確定のEnterでメッセージが送信されてしまう
   - 目的: 日本語ユーザーの使いやすさ向上
+  - 実装: 2段階アプローチ
+    1. **暫定対応（Qiita回避策）**: すぐに使えるようにする
+    2. **根本解決（OSSコントリビューション）**: Chainlit本体を修正
+
+  **Phase 1: 暫定対応（優先）**
   - 解決策: `public/custom.js` を作成してIME状態を追跡
   - 手順:
     1. `public/custom.js` ファイルを作成
     2. `.chainlit/config.toml` に `custom_js = "/public/custom.js"` を追加
     3. JavaScriptでIME compositionイベントをハンドリング
-  - 参考資料:
-    - Qiita記事: https://qiita.com/bohemian916/items/4f3e860904c24922905a
-    - 技術的背景: IME compositionStart/End イベントを使った対策が必要
-  - 見積もり: 1-2時間（調査+実装+テスト）
+  - 参考: Qiita記事 https://qiita.com/bohemian916/items/4f3e860904c24922905a
+  - 見積もり: 1-2時間
   - 影響範囲: public/custom.js（新規）、.chainlit/config.toml
+
+  **Phase 2: OSSコントリビューション（推奨）**
+  - 目的: 日本語・中国語・韓国語すべてのユーザーのために根本解決
+  - 関連Issue:
+    - Issue #2600: 中国語IME（Pinyin）の問題
+    - Issue #2598: 韓国語IMEの問題
+    - 日本語の報告はまだない → 追加する
+  - タスク:
+    1. Issue #2600と#2598に日本語でも同じ問題があるとコメント
+    2. 両方のIssueに👍リアクション（優先度を上げるため）
+    3. Chainlitのフロントエンドコードを調査（React）
+    4. Composition Events処理を追加するPRを作成
+    5. テスト: 日本語・中国語・韓国語すべてで動作確認
+  - 技術詳細:
+    - 場所: フロントエンドのReactコンポーネント（入力フィールド）
+    - 修正内容: `onCompositionStart/End`イベントハンドラを追加
+    - 実装例は decisions.md と references.md に記載済み
+  - 参考資料:
+    - Issue #2600: https://github.com/Chainlit/chainlit/issues/2600
+    - Issue #2598: https://github.com/Chainlit/chainlit/issues/2598
+    - Web標準: MDN Composition Events
+  - 見積もり: 3-5時間（コード調査+実装+テスト+PR作成）
+  - 影響範囲: Chainlitリポジトリ（フロントエンド）
+  - メリット:
+    - 自分のアプリだけでなく、全世界のユーザーに貢献
+    - 暫定回避策が不要になる
+    - メンテナンス負担が減る
 
 - [ ] Ruff (linter/formatter) の導入
   - 目的: コード品質の一貫性確保、自動フォーマット
