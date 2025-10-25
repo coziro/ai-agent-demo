@@ -2,7 +2,7 @@
 
 このファイルには、プロジェクトに関連する重要なリンク、ドキュメント、参考資料を集約します。
 
-**最終更新:** 2025-10-24
+**最終更新:** 2025-10-25
 
 ---
 
@@ -55,7 +55,15 @@
 - [OpenAI API ドキュメント](https://platform.openai.com/docs/)
 - [Anthropic API ドキュメント](https://docs.anthropic.com/)
 - [LangChain ドキュメント](https://python.langchain.com/docs/get_started/introduction)
+- [LangChain Models](https://docs.langchain.com/oss/python/langchain/models) - モデル統合のガイド
 - [LlamaIndex ドキュメント](https://docs.llamaindex.ai/)
+
+### 日本語IME対応（国際化）
+- [Qiita: Chainlitの日本語入力で変換途中にEnterを押すとメッセージ送信されてしまう](https://qiita.com/bohemian916/items/4f3e860904c24922905a) - Chainlit特有の回避策 (追加日: 2025-10-25)
+- [MDN: compositionstart event](https://developer.mozilla.org/en-US/docs/Web/API/Element/compositionstart_event) - Web標準のIME処理
+- [Handling IME events in JavaScript](https://www.stum.de/2016/06/24/handling-ime-events-in-javascript/) - IMEイベント処理の詳細解説
+- [Understanding Composition Browser Events](https://developer.squareup.com/blog/understanding-composition-browser-events/) - Squareによるベストプラクティス
+- [Stack Overflow: Detecting IME input](https://stackoverflow.com/questions/7316886/detecting-ime-input-before-enter-pressed-in-javascript) - コミュニティの知見
 
 ---
 
@@ -87,6 +95,22 @@ async def main(message: cl.Message):
     await cl.Message(content=f"受信: {message.content}").send()
 ```
 
+#### LangChain統合（シンプルなチャット）
+```python
+import chainlit as cl
+from langchain_openai import ChatOpenAI
+from langchain.messages import HumanMessage, SystemMessage
+
+model = ChatOpenAI(model="gpt-5-nano")
+system_msg = SystemMessage("You are a helpful assistant.")
+
+@cl.on_message
+async def main(message: cl.Message):
+    human_msg = HumanMessage(message.content)
+    response = await model.ainvoke([system_msg, human_msg])
+    await cl.Message(content=response.content).send()
+```
+
 #### ストリーミングレスポンス
 ```python
 @cl.on_message
@@ -98,6 +122,61 @@ async def main(message: cl.Message):
         await msg.stream_token(chunk)
 
     await msg.update()
+```
+
+### 日本語IME対応パターン
+
+#### Web標準のComposition Events（理想的な実装）
+```javascript
+// モダンブラウザ向けのシンプルな実装
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.isComposing) {
+    submit(); // IME変換中でなければ送信
+  }
+});
+
+// React等のフレームワークでの実装
+const [isComposing, setIsComposing] = useState(false);
+
+<input
+  onCompositionStart={() => setIsComposing(true)}
+  onCompositionEnd={() => setIsComposing(false)}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter' && !isComposing) {
+      submit();
+    }
+  }}
+/>
+```
+
+#### ブラウザ間の差異対応
+```javascript
+// ブラウザ間の差異を考慮した実装
+let isComposing = false;
+let hasCompositionJustEnded = false;
+
+input.addEventListener('compositionstart', () => {
+  isComposing = true;
+});
+
+input.addEventListener('compositionend', () => {
+  isComposing = false;
+  hasCompositionJustEnded = true;
+});
+
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !isComposing) {
+    if (hasCompositionJustEnded) {
+      // Chrome/Edge: compositionend直後のkeydownは無視しない
+      hasCompositionJustEnded = false;
+    }
+    submit();
+  }
+  // Safari対策: keyCode 229 は無視
+  if (e.which !== 229) {
+    hasCompositionJustEnded = false;
+  }
+});
 ```
 
 ---

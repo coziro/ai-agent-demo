@@ -285,6 +285,80 @@ async def main(message: cl.Message):
 2. ストリーミングレスポンス
 3. LangGraphを使ったエージェント実装
 
+### 日本語IME入力対応の技術調査 - 2025-10-25
+
+**状況・課題:**
+- Chainlitで日本語入力時、変換確定のEnterキーでメッセージが送信されてしまう
+- 英語圏で開発されたアプリケーションでは、このようなIME対応の問題が頻繁に発生
+- 汎用的なベストプラクティスと、Chainlit特有の対策を調査
+
+**検討した選択肢:**
+1. **Qiitaの回避策**: `public/custom.js`でグローバルにEnterキーをブロック
+2. **Web標準のComposition Events**: `compositionstart/end`イベントを使った正攻法
+3. **Chainlit本体への貢献**: Pull Requestで根本解決
+
+**技術的知見:**
+
+**Web標準のベストプラクティス（理想的な実装）:**
+```javascript
+// モダンブラウザ向けのシンプルな実装
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.isComposing) {
+    submit(); // IME変換中でなければ送信
+  }
+});
+
+// または、React等のフレームワークでの実装
+const [isComposing, setIsComposing] = useState(false);
+
+<input
+  onCompositionStart={() => setIsComposing(true)}
+  onCompositionEnd={() => setIsComposing(false)}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter' && !isComposing) {
+      submit();
+    }
+  }}
+/>
+```
+
+**ブラウザ間の差異:**
+- Chrome/Edge: `compositionend`後に`keyup`が発火しない
+- Firefox/Safari/IE11: `compositionend`後に`keyup`が発火する
+- Safari: 追加で`keydown`が`event.which`=229で発火
+- 対策: `keydown`を使う（`keyup`は使わない）
+
+**Qiitaの回避策の評価:**
+- ✅ 動作する: Chainlitで確実に問題を回避できる
+- ⚠️ 過剰な対策: プロトタイプパッチ、グローバルイベント傍受は侵襲的
+- ❌ 保守性: Chainlitのバージョンアップで壊れる可能性が高い
+- 理由: Chainlitのコードを直接編集できないため、外側から強引にブロックする必要がある
+
+**なぜ英語圏のアプリでこの問題が多いのか:**
+1. 開発者がIMEを使わず、テストが不十分
+2. CI/CDにIMEテストが含まれていない
+3. フレームワークが適切にComposition Eventsを処理していない場合がある
+
+**決定内容（暫定）:**
+- **MVP後にQiitaの回避策を実装**（現実的な選択）
+- 理由: すぐに動作し、ユーザー体験を改善できる
+- 将来的な選択肢: Chainlitに貢献、または独自UIの検討
+
+**参考資料:**
+- Qiita記事（回避策）: https://qiita.com/bohemian916/items/4f3e860904c24922905a
+- MDN - compositionstart: https://developer.mozilla.org/en-US/docs/Web/API/Element/compositionstart_event
+- Handling IME events: https://www.stum.de/2016/06/24/handling-ime-events-in-javascript/
+- Square's best practices: https://developer.squareup.com/blog/understanding-composition-browser-events/
+- Stack Overflow discussion: https://stackoverflow.com/questions/7316886/detecting-ime-input-before-enter-pressed-in-javascript
+
+**影響範囲:**
+- 実装時: public/custom.js（新規）、.chainlit/config.toml
+
+**学び:**
+- Web標準のComposition Eventsが存在するが、既存アプリに統合するのは難しい
+- 国際化（i18n）はアプリ設計の初期段階から考慮すべき
+- OSSへの貢献は、同様の問題を抱える他のユーザーにも貢献できる
+
 ---
 
 ## 次に決めるべきこと
