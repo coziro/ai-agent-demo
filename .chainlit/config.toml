@@ -88,7 +88,8 @@ reaction_on_message_received = false
 # Name of the assistant.
 name = "Assistant"
 
-# default_theme = "dark"
+# Set default theme to light to match the light logo
+default_theme = "light"
 
 # layout = "wide"
 
@@ -131,7 +132,7 @@ alert_style = "classic"
 # custom_meta_image_url = "https://chainlit-cloud.s3.eu-west-3.amazonaws.com/logo/chainlit_banner.png"
 
 # Load assistant logo directly from URL.
-logo_file_url = ""
+logo_file_url = "https://mintlify.s3.us-west-1.amazonaws.com/chainlit-43/logo/light.svg"
 
 # Load assistant avatar image directly from URL.
 default_avatar_file_url = ""
