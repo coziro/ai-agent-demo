@@ -29,6 +29,7 @@ Dependencies are defined in [pyproject.toml](pyproject.toml) and locked in `uv.l
 - **Main entry point**: [main.py](main.py) - Simple Python script entry point
 - **Chainlit app**: [app.py](app.py) - Chainlit chatbot application
 - **Chainlit configuration**: [.chainlit/](.chainlit/) - Chainlit settings and translations
+- **Claude Code context**: [.claude/](.claude/) - Project context, decisions, and session notes for Claude Code
 
 ## Chainlit Application
 
@@ -45,8 +46,36 @@ This project includes a Chainlit-based conversational AI application:
 - Runtime files (`.chainlit/*.db`, `.chainlit/.files/`, `.chainlit/cache/`) are gitignored
 - Configuration and translation files are version-controlled for team consistency
 
+## Claude Code Context Management
+
+This project uses a structured approach to preserve context across Claude Code sessions:
+
+### Context Files (.claude/ directory)
+
+- **[.claude/context.md](.claude/context.md)** - Current work in progress, session notes
+- **[.claude/decisions.md](.claude/decisions.md)** - Important design decisions and their rationale
+- **[.claude/todo.md](.claude/todo.md)** - Task tracking and prioritization
+- **[.claude/references.md](.claude/references.md)** - Links, documentation, and references
+
+### Usage
+
+When starting a new Claude Code session (after VS Code restart or container rebuild):
+
+1. Say: **".claude/context.mdを読んで、前回の続きをお願いします"**
+2. Claude Code will read the context and continue where you left off
+3. Update context files as you make progress or decisions
+
+### Best Practices
+
+- **Update context.md** when working on multi-session tasks
+- **Record decisions in decisions.md** when making important architectural choices
+- **Keep todo.md current** to track what's done and what's next
+- **Add useful links to references.md** for future reference
+
+All `.claude/` files are version-controlled for team collaboration.
+
 ## Important Notes
 
 - Jupyter and ipykernel are included as dependencies for notebook support
 - The DevContainer automatically installs VS Code extensions: Python, Jupyter, and Claude Code
-- When working inside the DevContainer, each Claude Code session is independent and won't have memory of conversations from outside the container
+- Each Claude Code session is independent, but context can be preserved using the `.claude/` directory files
