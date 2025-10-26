@@ -36,14 +36,7 @@
 
 **目標: 実用的なチャットアプリを完成させる**
 
-- [ ] README.mdの充実
-  - 目的: プロジェクトの説明、セットアップ方法、使い方を記載
-  - 内容: プロジェクト概要、機能、インストール手順、使い方
-  - 見積もり: 1時間
-
-- [ ] .env.exampleの作成
-  - 目的: 新規ユーザーがすぐに使い始められるように
-  - 見積もり: 15分
+🎉 **MVP完成！** 基本的なチャットアプリとして動作しています。
 
 ---
 
@@ -151,6 +144,18 @@
 ## 完了 (Completed)
 
 ### 2025-10-26
+
+- [x] MVP完成: README.md、.env.example、docker-compose.yml、LICENSE の作成
+  - シンプルなREADMEを作成（Quick Start、Development Setup、Project Structure）
+  - .env.exampleファイルを作成（OpenAI API Keyテンプレート）
+  - docker-compose.ymlを作成（既存Dockerfileを再利用、簡単にアプリ起動）
+  - LICENSEファイルを作成（MIT License、Copyright (c) 2025 coziro）
+  - 不要なセクションを削除してシンプルに（Features, Configuration, Troubleshootingなど）
+  - 🎉 MVPが完成！実用的なチャットアプリとして機能
+
+- [x] references.mdの更新
+  - LangChain公式ドキュメントのリンクを追加
+  - ストリーミングレスポンスのコード例を更新
 
 - [x] ストリーミングレスポンスの実装
   - LangChainの `astream()` を使ってリアルタイム表示を実装

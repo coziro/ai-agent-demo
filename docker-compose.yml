@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/workspaces/ai-agent-demo
+    env_file:
+      - .env
+    command: uv run chainlit run app.py --host 0.0.0.0
+    working_dir: /workspaces/ai-agent-demo
