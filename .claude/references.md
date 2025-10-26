@@ -2,7 +2,7 @@
 
 このファイルには、プロジェクトに関連する重要なリンク、ドキュメント、参考資料を集約します。
 
-**最終更新:** 2025-10-25
+**最終更新:** 2025-10-26
 
 ---
 
@@ -33,6 +33,13 @@
 - **Examples:** https://docs.chainlit.io/examples/community
 - **GitHub:** https://github.com/Chainlit/chainlit
 
+### LangChain
+- **公式ドキュメント:** https://python.langchain.com/
+- **API リファレンス:** https://python.langchain.com/api_reference/
+- **Concepts (コンセプト):** https://python.langchain.com/docs/concepts/
+- **How-to Guides:** https://python.langchain.com/docs/how_to/
+- **GitHub:** https://github.com/langchain-ai/langchain
+
 ### uv (Python パッケージマネージャー)
 - **公式ドキュメント:** https://docs.astral.sh/uv/
 - **GitHub:** https://github.com/astral-sh/uv
@@ -54,9 +61,15 @@
 ### LLM統合
 - [OpenAI API ドキュメント](https://platform.openai.com/docs/)
 - [Anthropic API ドキュメント](https://docs.anthropic.com/)
-- [LangChain ドキュメント](https://python.langchain.com/docs/get_started/introduction)
-- [LangChain Models](https://docs.langchain.com/oss/python/langchain/models) - モデル統合のガイド
 - [LlamaIndex ドキュメント](https://docs.llamaindex.ai/)
+
+### LangChain関連
+- [LangChain Quickstart](https://python.langchain.com/docs/get_started/quickstart) - 入門ガイド
+- [Messages](https://python.langchain.com/docs/concepts/messages/) - メッセージの概念（HumanMessage, AIMessage等）
+- [Chat Models](https://python.langchain.com/docs/concepts/chat_models/) - チャットモデルの使い方
+- [Streaming](https://python.langchain.com/docs/how_to/streaming/) - ストリーミングの実装方法
+- [LangChain + Chainlit Integration](https://docs.chainlit.io/integrations/langchain) - Chainlitとの統合ガイド
+- [AIMessageChunk API](https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.AIMessageChunk.html) - ストリーミング時のchunkオブジェクト
 
 ### 日本語IME対応（国際化）
 - [Qiita: Chainlitの日本語入力で変換途中にEnterを押すとメッセージ送信されてしまう](https://qiita.com/bohemian916/items/4f3e860904c24922905a) - Chainlit特有の回避策 (追加日: 2025-10-25)
@@ -111,18 +124,27 @@ async def main(message: cl.Message):
     await cl.Message(content=response.content).send()
 ```
 
-#### ストリーミングレスポンス
+#### ストリーミングレスポンス（LangChain + Chainlit）
 ```python
 @cl.on_message
 async def main(message: cl.Message):
     msg = cl.Message(content="")
-    await msg.send()
+    # 最初の send() は不要（ローディング表示を維持）
 
-    for chunk in generate_response(message.content):
-        await msg.stream_token(chunk)
+    full_response = ""
+    async for chunk in model.astream([HumanMessage(message.content)]):
+        if chunk.content:
+            await msg.stream_token(chunk.content)
+            full_response += chunk.content
 
-    await msg.update()
+    await msg.send()  # 最後に呼んで完了を通知（カーソル消去、コピーボタン表示）
 ```
+
+**重要な注意点:**
+- `astream()` は非同期ジェネレーターを返すため、`async for` が必要
+- `chunk.content` を使用（`.text` は非推奨）
+- 最初の `send()` は不要（`stream_token()` 初回呼び出し時に自動表示開始）
+- 最後の `send()` は必須（ストリーミング完了を通知、UI状態を更新）
 
 ### 日本語IME対応パターン
 
