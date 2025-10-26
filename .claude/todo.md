@@ -36,12 +36,6 @@
 
 ### 品質向上・開発環境改善
 
-- [ ] Ruff (linter/formatter) の導入
-  - 目的: コード品質の一貫性確保、自動フォーマット
-  - 影響範囲: pyproject.toml、VS Code設定、既存コードの修正
-  - 見積もり: 30分-1時間
-  - メモ: 早めに導入することで、今後のコード品質が向上
-
 - [ ] 日本語IME入力対応（Enterキー問題の修正）
   - 問題: 日本語変換確定のEnterでメッセージが送信されてしまう
   - 目的: 日本語ユーザーの使いやすさ向上
@@ -104,6 +98,20 @@
 
 ### 開発環境・運用改善
 
+- [ ] GitHub CLI (gh) のインストール
+  - 目的: CLIからPull Requestを作成・管理できるようにする
+  - 利点:
+    - Claude CodeがPRを自動作成できる
+    - コマンドラインでPRレビュー・マージが可能
+    - スクリプト化・自動化に便利
+  - 手順:
+    1. DevContainerにgh CLIをインストール（DockerfileまたはpostCreateCommand）
+    2. GitHub認証を設定（`gh auth login`）
+    3. 動作確認（`gh pr list`）
+  - 影響範囲: [.devcontainer/devcontainer.json](../.devcontainer/devcontainer.json)
+  - 見積もり: 15-30分
+  - メモ: なくても開発は進められるが、GitHub Flowを継続的に使うなら便利
+
 - [ ] Loggingの仕組み導入
   - 目的: デバッグ・運用時のトラブルシューティング
   - 検討項目: loguru vs 標準logging
@@ -144,6 +152,15 @@
 ## 完了 (Completed)
 
 ### 2025-10-26
+
+- [x] Ruff (linter/formatter) の導入
+  - Ruffをdev依存関係としてインストール
+  - pyproject.tomlに設定追加、DevContainerにRuff拡張機能追加
+  - 既存コードにRuffを適用
+  - GitHub Flow初実践（feature/add-ruff → PR #1 → マージ）
+  - 運用ルール確立: コミット前に手動実行
+  - 関連ファイル: [pyproject.toml](../pyproject.toml), [.devcontainer/devcontainer.json](../.devcontainer/devcontainer.json), [.claude/decisions.md](../.claude/decisions.md)
+  - 学び: YAGNI原則、GitHub Flowの実践、`gh`コマンド不要（ブラウザで代替可能）
 
 - [x] MVP完成: README.md、.env.example、docker-compose.yml、LICENSE の作成
   - シンプルなREADMEを作成（Quick Start、Development Setup、Project Structure）
