@@ -484,6 +484,63 @@ async def on_message(message: cl.Message):
 - この実装中、「メッセージが消える」問題が発生したが、実際はChainlitの `user_message_autoscroll = true` によるスクロールの挙動だった
 - `.chainlit/config.toml` でスクロール設定を調整して解決
 
+### ストリーミングレスポンスの実装方針 - 2025-10-26
+
+**状況・課題:**
+- ChatGPTのようなリアルタイムなチャット体験を実装したい
+- LangChainの `astream()` とChainlitの `stream_token()` を組み合わせる必要がある
+- 公式ドキュメントの例と実際の動作が異なる場合の対処
+
+**検討した選択肢:**
+1. **同期的なストリーミング**: 事前に全トークンを取得してから表示（公式例のパターン）
+2. **非同期ストリーミング**: LLMから逐次的にchunkを受け取りながら表示
+3. **ストリーミングなし**: 完全な応答を待ってから一度に表示
+
+**決定内容:**
+- **選択肢2: 非同期ストリーミングを採用**
+- `model.astream()` で非同期ジェネレーターを取得
+- `async for` でchunkを逐次処理
+- `.content` プロパティを使用（`.text` は非推奨）
+
+**実装パターン:**
+```python
+msg = cl.Message(content="")
+# 最初の send() は呼ばない（ローディング表示を維持）
+
+full_response = ""
+async for chunk in model.astream(messages):
+    if chunk.content:
+        await msg.stream_token(chunk.content)
+        full_response += chunk.content
+
+await msg.send()  # 最後に呼んでストリーミング完了を通知
+```
+
+**技術的な学び（実験による検証）:**
+- **`send()` のタイミング**:
+  - 最初に呼ぶと: 空メッセージが表示され、画面が止まったように見える（UX悪化）
+  - 最初に呼ばない: ローディング表示が維持される（UX向上）
+  - 最後に呼ぶ: カーソルが消え、コピーボタンが表示される（必須）
+- **`stream_token()` の動作**: 初回呼び出し時に自動的にメッセージ表示が開始される
+- **非同期ジェネレーター**: `astream()` の返り値には `async for` が必要（`for` だとエラー）
+- **`.content` vs `.text`**: LangChainで `.text` は非推奨、`.content` を使うべき
+
+**公式ドキュメントとの違い:**
+公式例では `msg = await cl.Message(content="").send()` と最初に `send()` を呼んでいるが、非同期ストリーミングの場合は動作が異なる。実験的検証により、最初の `send()` は不要で、最後にのみ必要であることが判明。
+
+**UX改善:**
+- ユーザー入力後、ローディング表示でレスポンス待ちが明確
+- ChatGPTのような文字が徐々に表示される体験
+- 完了時にコピーボタンが表示され、メッセージ完了が明確
+
+**影響範囲:**
+- [app.py](../app.py) - ストリーミング対応のメッセージ処理
+
+**参考:**
+- LangChain公式ドキュメント: https://python.langchain.com/docs/how_to/streaming/
+- Chainlit API リファレンス: https://docs.chainlit.io/api-reference/message
+- 実装中に複数回の実験を行い、UXを確認しながら最適なパターンを決定
+
 ---
 
 ## 次に決めるべきこと

@@ -18,9 +18,15 @@ async def on_message(message: cl.Message):
     
     human_msg = HumanMessage(message.content)
     messages.append(human_msg)
+    
+    msg = cl.Message(content="")
+    full_response = ""
+    async for chunk in model.astream(messages):
+        if chunk.content:
+            await msg.stream_token(chunk.content)
+            full_response += chunk.content
 
-    response = await model.ainvoke(messages)
-    ai_msg = AIMessage(response.content)
+    ai_msg = AIMessage(full_response)
     messages.append(ai_msg)
+    await msg.send()
 
-    await cl.Message(content=response.content).send()
