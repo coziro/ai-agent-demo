@@ -25,10 +25,68 @@
 
 ### 進行中のタスク
 
-現在は特に進行中のタスクはありません。
+#### Ruff (linter/formatter) の導入 - 開始日: 2025-10-26
 
-**次のタスク:**
-- MVP完成後の改善（エラーハンドリング、日本語IME対応など）
+**目的:**
+- コード品質の一貫性確保、自動フォーマット
+- GitHub Flowの練習も兼ねて実施
+
+**現在のブランチ:**
+- `feature/add-ruff` (mainから分岐)
+
+**現在の状態:**
+- ✅ 完了した項目:
+  1. `feature/add-ruff` ブランチを作成
+  2. `uv add --dev ruff` でRuffをインストール（dev依存関係として）
+  3. pyproject.tomlにRuff設定を追加（ルールセット、フォーマット設定）
+  4. .devcontainer/devcontainer.jsonにRuff拡張機能を追加
+
+- ⏳ 現在の作業:
+  5. **DevContainerを再ビルド中**（Ruff拡張機能を有効化するため）
+
+- 🔜 未完了の項目:
+  6. VS Code設定ファイル（.vscode/settings.json）を作成
+     - Ruffを有効化
+     - 保存時に自動フォーマット
+     - 保存時にlint + 自動修正
+  7. 既存コード（app.py, main.py等）にRuffを実行して問題修正
+  8. 動作確認（VS Codeで保存時に自動フォーマットされるか）
+  9. Pull Requestを作成
+  10. レビュー・マージ
+
+**次にやること（コンテナ再ビルド後）:**
+1. `.vscode/settings.json` を作成してRuff統合を設定
+2. `uv run ruff check .` で既存コードをチェック
+3. `uv run ruff check --fix .` で自動修正可能な問題を修正
+4. `uv run ruff format .` でコードフォーマット
+5. 動作確認（VS Codeでファイル編集・保存時に自動適用されるか）
+6. 変更をコミット
+7. Pull Requestを作成: `gh pr create --title "Add Ruff linter/formatter" --body "..."`
+
+**ブロッカー:**
+- なし（順調）
+
+**関連ファイル:**
+- [pyproject.toml](../pyproject.toml) - Ruff設定を追加済み
+- [.devcontainer/devcontainer.json](../.devcontainer/devcontainer.json) - Ruff拡張機能を追加済み
+- [.vscode/settings.json](../.vscode/settings.json) - これから作成
+
+**技術メモ:**
+- `uv add --dev` で開発環境専用の依存関係を追加
+- `uv sync` で開発用依存関係も含めてインストール
+- `uv sync --no-dev` で本番用のみインストール（将来使用）
+- DevContainerの `customizations.vscode.extensions` にRuff拡張機能IDを追加
+- UV_LINK_MODE warningは無視（動作に問題なし）
+
+**GitHub Flow実践:**
+これが初めてのGitHub Flow適用例です。手順通りに進んでいます:
+1. ✅ mainからfeature/add-ruffブランチを作成
+2. ✅ feature/add-ruffブランチで開発中
+3. 🔜 Pull Request作成予定
+4. 🔜 レビュー・動作確認
+5. 🔜 mainにマージ
+
+---
 
 **作業を開始したら、以下のテンプレートを使って記録してください：**
 

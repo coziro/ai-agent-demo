@@ -10,7 +10,8 @@
         "ms-python.python",
         "ms-toolsai.jupyter",
         "anthropic.claude-code",
-        "tamasfe.even-better-toml"
+        "tamasfe.even-better-toml",
+        "charliermarsh.ruff"
       ]
     }
   }

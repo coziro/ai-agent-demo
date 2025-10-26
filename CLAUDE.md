@@ -74,6 +74,68 @@ When starting a new Claude Code session (after VS Code restart or container rebu
 
 All `.claude/` files are version-controlled for team collaboration.
 
+## Development Workflow (Git Branch Strategy)
+
+This project follows **GitHub Flow** to maintain a stable main branch:
+
+### Branch Strategy
+
+- **main branch**: Always in a deployable state, production-ready code only
+- **Feature branches**: `feature/name`, `fix/name`, `refactor/name`
+- **No direct commits to main** (except emergency hotfixes)
+
+### Workflow Steps
+
+1. **Create a feature branch from main**:
+   ```bash
+   git checkout main
+   git pull
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Develop and commit on the feature branch**:
+   ```bash
+   git add .
+   git commit -m "Implement feature X"
+   ```
+
+3. **Create a Pull Request**:
+   ```bash
+   gh pr create --title "Add feature X" --body "Description of changes"
+   ```
+
+4. **Review and test**:
+   - Review code changes (especially code written by Claude Code)
+   - Test locally to ensure functionality
+   - Check for regressions in existing features
+
+5. **Merge to main** (if successful):
+   ```bash
+   gh pr merge
+   ```
+
+6. **Delete branch** (if unsuccessful):
+   ```bash
+   git checkout main
+   git branch -D feature/failed-feature
+   ```
+
+### Pull Request Guidelines
+
+Every PR should include:
+- **Summary**: What changed and why
+- **Testing instructions**: How to verify the changes work
+- **Screenshots**: If UI changes are involved
+
+### Working with Claude Code
+
+- Ask Claude Code to create feature branches before starting work
+- Request Claude Code to create Pull Requests with detailed descriptions
+- **Always review Claude Code's changes** before merging to main
+- Final merge decision is made by humans
+
+For detailed decision rationale, see [.claude/decisions.md](.claude/decisions.md#github-flowベースのブランチ戦略---2025-10-26).
+
 ## Important Notes
 
 - Jupyter and ipykernel are included as dependencies for notebook support
