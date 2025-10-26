@@ -25,72 +25,7 @@
 
 ### 進行中のタスク
 
-#### GitHub CLI (gh) のインストール - 開始日: 2025-10-26
-
-**目的:**
-- GitHub CLI (`gh`) をDevContainerにインストール
-- Pull Requestの作成・管理をCLIから実行可能にする
-- GitHub Flowの実践を効率化
-
-**現在の状態:**
-- ✅ feature/add-github-cli ブランチ作成
-- ✅ Dockerfile編集完了（`gh` パッケージ追加）
-- ✅ context.md に議論内容を記録
-- ⏳ DevContainer再ビルド（次のステップ）
-- ⏳ 動作確認
-- ⏳ ドキュメント更新
-
-**実装方針:**
-- **オプションA: インストールのみ**を採用
-- Debian標準リポジトリから `apt-get install gh`
-- Dockerfileに1行追加（git, curl, vimと統一）
-- 認証（gh auth login）は今回実施しない（後回し）
-
-**重要な技術的議論:**
-
-1. **インストール方法の選択:**
-   - ❌ DevContainer Features: 一貫性に欠ける
-   - ✅ Dockerfile (apt-get): 他のツールと統一、シンプル
-   - ❌ GitHub公式リポジトリ: 複雑、最新版は不要
-
-2. **認証のセキュリティリスク:**
-   - ⚠️ デフォルトの `gh auth login` は**全リポジトリ**にアクセス可能
-   - リスク: Claude Codeが誤って他プロジェクトを操作する可能性
-   - 解決策: **Fine-grained Personal Access Token** で特定リポジトリ(ai-agent-demo)のみに制限
-   - 多層防御: Fine-grained Token + Branch Protection Rules
-
-3. **認証の永続化:**
-   - 課題: コンテナ再ビルドのたびに `gh auth login` が必要
-   - 解決策A: ホストの `~/.config/gh/hosts.yml` をマウント
-   - 解決策B: 環境変数 `GH_TOKEN` を使用
-   - 今回: 手動認証（シンプル優先、後で改善）
-
-**次にやること:**
-1. Dockerfileを編集（`gh` パッケージ追加）
-2. DevContainerを再ビルド（⚠️ コンテキスト消失注意）
-3. 動作確認（`gh --version`, `gh auth status`）
-4. ドキュメント更新（CLAUDE.md, decisions.md, todo.md, context.md）
-5. 変更をコミット・プッシュ
-6. （後日）Pull Request作成（ghコマンドで実践！）
-
-**ブロッカー:**
-- なし
-
-**関連ファイル:**
-- [.devcontainer/Dockerfile](../.devcontainer/Dockerfile) - `gh` パッケージ追加
-- [CLAUDE.md](../CLAUDE.md) - 使用方法の追記
-- [.claude/decisions.md](decisions.md) - 技術選択の記録
-- [.claude/todo.md](todo.md) - タスク完了の記録
-
-**参考資料:**
-- GitHub CLI公式: https://cli.github.com/
-- Debian packages: https://packages.debian.org/bookworm/gh
-- Fine-grained Tokens: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
-
-**メモ:**
-- コンテナ再ビルド時にこのファイルを読み返すこと
-- 認証は必要になってから実施する方針
-- Branch Protection Rulesは別タスクとして検討
+現在進行中のタスクはありません。
 
 ---
 
@@ -125,6 +60,36 @@
 ---
 
 ## 最近完了したタスク
+
+### GitHub CLI (gh) のインストールとドキュメント整備 - 2025-10-26
+
+**完了内容:**
+- GitHub CLI (`gh`) をDevContainerにインストール（Dockerfile編集）
+- バージョン確認: gh version 2.23.0
+- 認証確認: github.com (coziro) で認証済み
+- CLAUDE.mdにGitHub CLIセクションを追加
+  - Common Commands (create PR, list, view, merge)
+  - Authentication instructions
+  - Security recommendations (Fine-grained PAT)
+- feature/add-github-cliブランチで実装
+- 変更をコミット・プッシュ
+
+**技術的な学び:**
+- DevContainerは既に再ビルド済みで、gh CLIが使用可能な状態だった
+- ホストの`~/.config/gh/hosts.yml`が認証情報として利用されている
+- Dockerfileへの追加は非常にシンプル（1行: `gh \`）
+
+**成果物:**
+- [.devcontainer/Dockerfile](../.devcontainer/Dockerfile) - gh追加（コミット dc50a21）
+- [CLAUDE.md](../CLAUDE.md) - GitHub CLIセクション追加（コミット 36dab65）
+- feature/add-github-cliブランチ（リモートにプッシュ済み）
+
+**次のステップ:**
+- Pull Requestを作成（ghコマンドで実践！）
+- レビュー・マージ
+- decisions.mdとtodo.mdを更新してタスク完全完了
+
+---
 
 ### Ruff (linter/formatter) の導入 - 2025-10-26
 

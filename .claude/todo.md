@@ -117,19 +117,6 @@
   - 見積もり: 1-2時間
   - メモ: Ruffと組み合わせることで、コード品質が大幅に向上
 
-- [ ] GitHub CLI (gh) のインストール
-  - 目的: CLIからPull Requestを作成・管理できるようにする
-  - 利点:
-    - Claude CodeがPRを自動作成できる
-    - コマンドラインでPRレビュー・マージが可能
-    - スクリプト化・自動化に便利
-  - 手順:
-    1. DevContainerにgh CLIをインストール（DockerfileまたはpostCreateCommand）
-    2. GitHub認証を設定（`gh auth login`）
-    3. 動作確認（`gh pr list`）
-  - 影響範囲: [.devcontainer/devcontainer.json](../.devcontainer/devcontainer.json)
-  - 見積もり: 15-30分
-  - メモ: なくても開発は進められるが、GitHub Flowを継続的に使うなら便利
 
 - [ ] Loggingの仕組み導入
   - 目的: デバッグ・運用時のトラブルシューティング
@@ -171,6 +158,15 @@
 ## 完了 (Completed)
 
 ### 2025-10-26
+
+- [x] GitHub CLI (gh) のインストールとドキュメント整備
+  - GitHub CLI (`gh`) をDevContainerにインストール（Dockerfile編集）
+  - バージョン確認: gh version 2.23.0
+  - 認証確認: 既に認証済み（github.com as coziro）
+  - CLAUDE.mdにGitHub CLIセクションを追加（Common Commands、Authentication）
+  - feature/add-github-cliブランチで実装
+  - 関連ファイル: [.devcontainer/Dockerfile](../.devcontainer/Dockerfile), [CLAUDE.md](../CLAUDE.md)
+  - 学び: DevContainerが既に再ビルド済み、認証情報はホストから引き継がれる
 
 - [x] Ruff (linter/formatter) の導入
   - Ruffをdev依存関係としてインストール
