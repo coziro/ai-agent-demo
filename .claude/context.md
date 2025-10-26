@@ -61,6 +61,36 @@
 
 ## 最近完了したタスク
 
+### GitHub CLI (gh) のインストールとドキュメント整備 - 2025-10-26
+
+**完了内容:**
+- GitHub CLI (`gh`) をDevContainerにインストール（Dockerfile編集）
+- バージョン確認: gh version 2.23.0
+- 認証確認: github.com (coziro) で認証済み
+- CLAUDE.mdにGitHub CLIセクションを追加
+  - Common Commands (create PR, list, view, merge)
+  - Authentication instructions
+  - Security recommendations (Fine-grained PAT)
+- feature/add-github-cliブランチで実装
+- 変更をコミット・プッシュ
+
+**技術的な学び:**
+- DevContainerは既に再ビルド済みで、gh CLIが使用可能な状態だった
+- ホストの`~/.config/gh/hosts.yml`が認証情報として利用されている
+- Dockerfileへの追加は非常にシンプル（1行: `gh \`）
+
+**成果物:**
+- [.devcontainer/Dockerfile](../.devcontainer/Dockerfile) - gh追加（コミット dc50a21）
+- [CLAUDE.md](../CLAUDE.md) - GitHub CLIセクション追加（コミット 36dab65）
+- feature/add-github-cliブランチ（リモートにプッシュ済み）
+
+**次のステップ:**
+- Pull Requestを作成（ghコマンドで実践！）
+- レビュー・マージ
+- decisions.mdとtodo.mdを更新してタスク完全完了
+
+---
+
 ### Ruff (linter/formatter) の導入 - 2025-10-26
 
 **完了内容:**

@@ -701,6 +701,65 @@ await msg.send()  # 最後に呼んでストリーミング完了を通知
 **参考資料:**
 - Ruff公式ドキュメント: https://docs.astral.sh/ruff/
 
+### GitHub CLI (gh) の導入 - 2025-10-26
+
+**状況・課題:**
+- GitHub Flowを採用し、Pull Requestベースのワークフローを実践
+- PRの作成・レビュー・マージをコマンドラインから効率的に行いたい
+- Claude Codeにも自動的にPRを作成してもらいたい
+
+**検討した選択肢:**
+1. **ブラウザでPR管理**: GitHub Web UIを使用、CLIツール不要
+2. **GitHub CLI (gh)**: 公式CLIツール、フル機能サポート
+3. **hub**: 旧世代のGitHub CLIツール（非推奨）
+
+**決定内容:**
+- **GitHub CLI (`gh`) を採用**
+- **Dockerfileに追加してDevContainerにインストール**
+- **Debian標準リポジトリからapt-getでインストール**
+
+**理由:**
+- **GitHub公式ツール**: Githubが公式にメンテナンス
+- **Claude Codeとの相性**: Claude Codeがコマンドラインから直接PR作成可能
+- **効率性**: ターミナルから離れずにPRレビュー・マージが可能
+- **GitHub Flowとの親和性**: ブランチ作成→開発→PR作成の流れをCLIで完結
+- **シンプルなインストール**: Debian標準リポジトリから`apt-get install gh`で完了
+
+**インストール方法の選択:**
+- ❌ **DevContainer Features**: 一貫性に欠ける、Dockerfile方式と統一すべき
+- ✅ **Dockerfile (apt-get)**: git、curl、vimと同じ方式でシンプル
+- ❌ **GitHub公式リポジトリ追加**: 複雑、最新版は必須ではない
+
+**認証方法:**
+- **現状**: ホストの`~/.config/gh/hosts.yml`が自動的に利用される
+- **推奨**: Fine-grained Personal Access Token で特定リポジトリ(ai-agent-demo)のみに制限
+- **セキュリティ**: 全リポジトリへのアクセスを避け、必要最小限の権限に制限
+
+**実装内容:**
+```dockerfile
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    vim \
+    gh \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+**影響範囲:**
+- [.devcontainer/Dockerfile](../.devcontainer/Dockerfile) - gh追加
+- [CLAUDE.md](../CLAUDE.md) - GitHub CLIセクション追加（使用方法、認証、セキュリティ）
+
+**参考資料:**
+- GitHub CLI公式: https://cli.github.com/
+- Debian packages: https://packages.debian.org/bookworm/gh
+- Fine-grained Tokens: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+
+**成果:**
+- gh version 2.23.0 がインストール済み
+- 認証済み（github.com as coziro）
+- CLAUDE.mdに使用方法を記載
+- 次回からPRをghコマンドで作成可能
+
 ---
 
 ## 次に決めるべきこと
