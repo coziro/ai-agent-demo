@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     vim \
+    gh \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspaces/ai-agent-demo
