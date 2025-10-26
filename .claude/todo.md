@@ -118,6 +118,26 @@
   - メモ: Ruffと組み合わせることで、コード品質が大幅に向上
 
 
+- [ ] GitHub CLI (gh) の認証方法の見直し
+  - 目的: セキュリティと利便性の向上
+  - 現状の課題:
+    - ホストの `~/.config/gh/hosts.yml` に依存している
+    - 認証トークンのスコープが広すぎる可能性
+  - 検討項目:
+    1. **Fine-grained Personal Access Token**: 特定リポジトリ(ai-agent-demo)のみに制限
+    2. **認証の永続化方法**:
+       - オプションA: ホストの認証情報をマウント（現状）
+       - オプションB: 環境変数 `GH_TOKEN` を使用
+       - オプションC: DevContainer内で `gh auth login` を実行
+    3. **Branch Protection Rules**: mainブランチへの直接pushを防ぐ
+  - 実装内容:
+    - Fine-grained PATの作成と設定（必要な権限のみ）
+    - 認証方法の最適化（必要に応じて）
+  - 影響範囲: [.devcontainer/devcontainer.json](../.devcontainer/devcontainer.json)（認証設定）
+  - 見積もり: 1時間
+  - 参考: [decisions.md](decisions.md) - GitHub CLI採用の決定に記載済み
+  - メモ: 実際の運用で不便が出てから対応でOK
+
 - [ ] Loggingの仕組み導入
   - 目的: デバッグ・運用時のトラブルシューティング
   - 検討項目: loguru vs 標準logging

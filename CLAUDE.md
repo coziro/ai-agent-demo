@@ -134,6 +134,13 @@ Every PR should include:
 - **Always review Claude Code's changes** before merging to main
 - Final merge decision is made by humans
 
+### Special Cases
+
+**`.claude/` directory files:**
+- **context.md, todo.md**: Direct commits to main are acceptable (frequent updates, low risk)
+- **decisions.md**: PR recommended (important design decisions)
+- Rationale: See [.claude/decisions.md](.claude/decisions.md#claudeファイルのコミット方針---2025-10-26)
+
 For detailed decision rationale, see [.claude/decisions.md](.claude/decisions.md#github-flowベースのブランチ戦略---2025-10-26).
 
 ## GitHub CLI (gh)
