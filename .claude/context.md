@@ -61,6 +61,45 @@
 
 ## 最近完了したタスク
 
+### .gitignoreの更新 - 2025-10-26
+
+**完了内容:**
+- `.venv/`を明示的に追加（uvの推奨ディレクトリ）
+- `.ruff_cache/`を追加（Ruffのキャッシュディレクトリ）
+- 直接mainにコミット・プッシュ（コミット a10d22f）
+
+**学び:**
+- .gitignoreは設定ファイルなので直接コミットで問題なし（低リスク）
+- git statusがクリーンになり、開発効率向上
+
+**成果物:**
+- [.gitignore](../.gitignore) - .venv/と.ruff_cache/を追加
+
+---
+
+### .claude/ファイルのコミット方針を確立 - 2025-10-26
+
+**完了内容:**
+- context.md, todo.md: 直接コミットOK（頻繁に更新、低リスク）
+- decisions.md: PR推奨（重要な設計決定）
+- コード変更: PR必須（アプリケーション動作に影響）
+- [decisions.md](decisions.md)に決定事項を記録
+- [CLAUDE.md](../CLAUDE.md)のGitHub FlowセクションにSpecial Casesを追加
+- todo.mdにgh CLI認証見直しタスクを追加
+- 直接mainにコミット・プッシュ（コミット f950e9a）
+
+**学び:**
+- 実用性と品質のバランスが重要
+- ファイルの性質に応じて適切なワークフローを選択
+- 作業メモは効率優先、重要な決定は品質優先
+
+**成果物:**
+- [.claude/decisions.md](decisions.md) - コミット方針を記録
+- [CLAUDE.md](../CLAUDE.md) - Special Casesセクション追加
+- [.claude/todo.md](todo.md) - gh CLI認証見直しタスク追加
+
+---
+
 ### GitHub CLI (gh) のインストールとドキュメント整備 - 2025-10-26
 
 **完了内容:**
@@ -72,22 +111,28 @@
   - Authentication instructions
   - Security recommendations (Fine-grained PAT)
 - feature/add-github-cliブランチで実装
-- 変更をコミット・プッシュ
+- Pull Request #2をgh CLIで作成（ドッグフーディング！）
+- PRをマージ後、ブランチをクリーンアップ
+- .claude/ファイルを更新（context.md, todo.md, decisions.md）
 
 **技術的な学び:**
 - DevContainerは既に再ビルド済みで、gh CLIが使用可能な状態だった
 - ホストの`~/.config/gh/hosts.yml`が認証情報として利用されている
 - Dockerfileへの追加は非常にシンプル（1行: `gh \`）
+- `gh pr create`でPRを作成し、GitHub Flowを実践
 
 **成果物:**
 - [.devcontainer/Dockerfile](../.devcontainer/Dockerfile) - gh追加（コミット dc50a21）
 - [CLAUDE.md](../CLAUDE.md) - GitHub CLIセクション追加（コミット 36dab65）
-- feature/add-github-cliブランチ（リモートにプッシュ済み）
+- [.claude/decisions.md](decisions.md) - GitHub CLI採用の決定を記録（コミット 787bfda）
+- Pull Request #2（マージ済み、コミット 7163063）
 
-**次のステップ:**
-- Pull Requestを作成（ghコマンドで実践！）
+**GitHub Flowの実践:**
+- feature/add-github-cliブランチ作成
+- 開発・コミット
+- gh pr createでPR作成
 - レビュー・マージ
-- decisions.mdとtodo.mdを更新してタスク完全完了
+- ブランチクリーンアップ
 
 ---
 
