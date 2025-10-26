@@ -98,6 +98,25 @@
 
 ### 開発環境・運用改善
 
+- [ ] Static type check (型チェック) の導入
+  - 目的: 型エラーを事前に検出し、コードの安全性を向上
+  - 検討ツール:
+    - **mypy**: 最もポピュラーな型チェッカー、厳格なチェック
+    - **pyright**: Microsoft製、高速、VS Code統合が優れている
+    - **pytype**: Google製、型ヒント不要でも推論可能
+  - 実装内容:
+    1. ツール選定（mypyまたはpyright推奨）
+    2. `uv add --dev mypy` または `uv add --dev pyright`
+    3. pyproject.tomlに設定を追加
+    4. 既存コードに型ヒントを追加（段階的に）
+    5. DevContainerに型チェッカー拡張機能を追加（VS Code）
+  - 運用ルール案:
+    - コミット前に `uv run mypy .` または `uv run pyright` を実行
+    - Ruffと同様に手動実行（将来的にGitHub Actionsで自動化）
+  - 影響範囲: pyproject.toml、app.py、.devcontainer/devcontainer.json
+  - 見積もり: 1-2時間
+  - メモ: Ruffと組み合わせることで、コード品質が大幅に向上
+
 - [ ] GitHub CLI (gh) のインストール
   - 目的: CLIからPull Requestを作成・管理できるようにする
   - 利点:
