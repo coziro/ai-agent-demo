@@ -396,6 +396,94 @@ const [isComposing, setIsComposing] = useState(false);
 - 国際化（i18n）はアプリ設計の初期段階から考慮すべき
 - OSSへの貢献は、同様の問題を抱える他のユーザーにも貢献できる
 
+### UIレイヤーとビジネスロジックの分離方針 - 2025-10-26
+
+**状況・課題:**
+- Chainlitで会話履歴管理を実装する際、`cl.user_session` や `cl.chat_context` などChainlit固有の機能を使うか検討
+- 将来的にStreamlitや別のUIフレームワークに移行する可能性がある
+
+**検討した選択肢:**
+1. **Chainlitの機能を最大限活用**: `cl.chat_context.to_openai()` などで簡単に実装
+2. **ビジネスロジックを分離**: ChatSessionクラスなどを作成してフレームワーク非依存に
+3. **完全なレイヤー分離**: UI層、ビジネスロジック層、LLM層を明確に分ける
+
+**決定内容:**
+- **現時点では選択肢1で実装（Chainlitに依存）**
+- **将来的には選択肢2-3への移行を推奨**
+
+**理由:**
+- MVP段階では開発速度を優先
+- ただし、フレームワークロックインのリスクは認識しておく
+- 将来の移行時には `ChatSession` クラスなどを作成してビジネスロジックを抽出する
+
+**推奨アーキテクチャ（将来的）:**
+```
+UI Layer (Chainlit/Streamlit等) ← フレームワーク依存
+    ↓↑
+Business Logic Layer (ChatSession等) ← フレームワーク非依存
+    ↓↑
+LLM Layer (LangChain等) ← プロバイダー抽象化
+```
+
+**メリット:**
+- テストが容易（ビジネスロジックを単体でテスト可能）
+- 再利用性が高い（CLI、API、Slackボットなどでも使える）
+- フレームワーク移行が簡単
+
+**影響範囲:**
+- 現在: [app.py](../app.py) - Chainlit依存の実装
+- 将来: ChatSessionクラスなどを作成して分離
+
+**参考:**
+- この決定は、実装中の議論で「将来別のUIフレームワークに変更する可能性」が明らかになった際に確認された
+- 現時点では技術的負債として認識しつつ、MVP完成を優先
+
+### 会話履歴の管理方法（手動 vs 自動） - 2025-10-26
+
+**状況・課題:**
+- Chainlitには `cl.chat_context` という自動的に会話履歴を管理する機能がある
+- 手動で `cl.user_session` にメッセージリストを保存する方法もある
+
+**検討した選択肢:**
+1. **cl.chat_context を使用**: Chainlitが自動的に管理、`to_openai()` で取得
+2. **手動でmessagesリストを管理**: `cl.user_session` で明示的に保存
+
+**決定内容:**
+- **手動でmessagesリストを管理する方法を採用**
+
+**理由:**
+- UIフレームワーク非依存を将来的に目指すため、Chainlit固有機能への依存を最小限にする
+- 明示的な管理により、どこでどうデータが保持されているか理解しやすい
+- 将来のフレームワーク移行時、会話履歴管理のロジックをそのまま再利用できる可能性が高い
+
+**技術的な学び:**
+- **Pythonのリストは参照渡し**: `cl.user_session.get("messages")` で取得したリストに `append()` すると、セッション内のリストも自動的に更新される（再度 `set()` する必要なし）
+- これはミュータブル（変更可能）なオブジェクトの特性による
+- イミュータブル（文字列、数値など）の場合は、再度 `set()` が必要
+
+**実装例:**
+```python
+@cl.on_chat_start
+async def on_chat_start():
+    messages = [SystemMessage("You are a helpful assistant.")]
+    cl.user_session.set("messages", messages)
+
+@cl.on_message
+async def on_message(message: cl.Message):
+    messages = cl.user_session.get("messages")  # リストの参照を取得
+    messages.append(HumanMessage(message.content))  # 直接変更される
+    response = await model.ainvoke(messages)
+    messages.append(AIMessage(response.content))  # これも直接変更される
+    # 再度 set() する必要なし！
+```
+
+**影響範囲:**
+- [app.py](../app.py) - マルチターン会話の実装
+
+**参考:**
+- この実装中、「メッセージが消える」問題が発生したが、実際はChainlitの `user_message_autoscroll = true` によるスクロールの挙動だった
+- `.chainlit/config.toml` でスクロール設定を調整して解決
+
 ---
 
 ## 次に決めるべきこと
