@@ -543,6 +543,110 @@ await msg.send()  # 最後に呼んでストリーミング完了を通知
 
 ---
 
+### GitHub Flowベースのブランチ戦略 - 2025-10-26
+
+**状況・課題:**
+- MVP完成後、複数の改善タスクを並行して進める必要が出てきた
+- これまではmainブランチに直接コミットしていた
+- 実験的な機能開発でmainブランチが不安定になるリスクがある
+- 人間だけでなくClaude Codeもコードを書くため、レビュープロセスが重要
+
+**検討した選択肢:**
+1. **mainブランチ直接コミット（現状）**: シンプルだが、戻すのが難しい
+2. **GitHub Flow**: 機能ブランチ + Pull Request、シンプルで効果的
+3. **Git Flow**: develop/release/hotfixブランチ、大規模プロジェクト向け（過剰）
+4. **GitLab Flow**: 環境別ブランチ、複数環境デプロイ向け（不要）
+
+**決定内容:**
+- **GitHub Flowを採用**
+- **Pull Requestによるレビューを必須化**
+
+**ブランチ戦略の詳細:**
+
+1. **mainブランチ**:
+   - 常にデプロイ可能な状態を保つ
+   - 動作確認済みのコードのみをマージ
+   - 直接コミットは禁止（緊急修正を除く）
+
+2. **機能ブランチ**:
+   - 命名規則: `feature/機能名`、`fix/バグ名`、`refactor/対象`
+   - 例: `feature/japanese-ime-support`, `fix/error-handling`, `refactor/chat-session`
+   - mainから作成、作業完了後にmainへマージ
+
+3. **ワークフロー**:
+   ```
+   1. mainから機能ブランチを作成
+      git checkout -b feature/new-feature
+
+   2. 機能ブランチで開発・コミット
+      git add .
+      git commit -m "実装内容"
+
+   3. Pull Requestを作成
+      gh pr create --title "タイトル" --body "説明"
+
+   4. レビュー・動作確認
+      - Claude Codeが作成したコードを人間がレビュー
+      - ローカルで動作確認
+
+   5. 問題なければmainにマージ
+      gh pr merge
+
+   6. うまくいかない場合はブランチ削除
+      git checkout main
+      git branch -D feature/failed-feature
+   ```
+
+4. **Pull Requestのルール**:
+   - すべてのマージはPR経由で行う
+   - PR説明には以下を含める:
+     - 変更の概要
+     - 動作確認方法
+     - スクリーンショット（UI変更の場合）
+   - レビューポイント:
+     - コードの品質（可読性、保守性）
+     - 動作確認（実際に動くか）
+     - 副作用の確認（既存機能を壊していないか）
+
+5. **Claude Codeとの協業**:
+   - Claude Codeに機能実装を依頼する際、ブランチ作成から依頼
+   - PRはClaude Codeに作成してもらう
+   - 最終レビュー・マージ判断は人間が行う
+
+**理由:**
+- **GitHub Flow採用**:
+  - シンプルで理解しやすい（個人開発に最適）
+  - mainが常に安定している安心感
+  - いつでもmainに戻れる柔軟性
+  - Git Flowは過剰（develop/releaseブランチは不要）
+- **PR必須化**:
+  - Claude Codeが書いたコードを人間がレビューできる
+  - 変更履歴が明確に残る
+  - GitHubの機能（CI、コードレビュー等）を活用できる
+  - 将来、他の開発者が参加する際もスムーズ
+
+**トレードオフ:**
+- 手間が増える（ブランチ作成、PR作成、マージ）
+- しかし、以下のメリットがコストを上回る:
+  - mainブランチの安定性確保
+  - 失敗した実験を簡単に破棄できる
+  - コードレビューによる品質向上
+
+**影響範囲:**
+- 開発ワークフロー全体
+- CLAUDE.mdに開発プロセスを追記予定
+- README.mdのDevelopmentセクション更新を検討
+
+**参考資料:**
+- GitHub Flow解説: https://docs.github.com/en/get-started/using-github/github-flow
+- gh CLI (Pull Request作成): https://cli.github.com/manual/gh_pr_create
+
+**次のアクション:**
+- CLAUDE.mdにブランチ戦略を記載
+- 次の機能開発から実際にGitHub Flowを適用
+
+---
+
 ## 次に決めるべきこと
 
 このセクションには、**まだ決定していない重要な設計判断**を記録します。
