@@ -127,8 +127,16 @@
 
 ## アイデア・検討中 (Ideas / Backlog)
 
+- [ ] GitHub ActionsでRuffの自動チェック
+  - 目的: PR作成時に自動的にコード品質をチェック
+  - 実装内容:
+    - `.github/workflows/lint.yml` を作成
+    - `ruff check` と `ruff format --check` を実行
+    - PRがマージされる前にコード品質を保証
+  - 見積もり: 30分-1時間
+  - メモ: 現時点では手動運用で十分、必要性が出てから実装
+
 - Jupyter Notebookでのプロトタイピング例を追加
-- CI/CDパイプラインの構築
 - ユニットテストの追加
 
 ---
