@@ -136,6 +136,49 @@ Every PR should include:
 
 For detailed decision rationale, see [.claude/decisions.md](.claude/decisions.md#github-flowベースのブランチ戦略---2025-10-26).
 
+## GitHub CLI (gh)
+
+This project includes **GitHub CLI (`gh`)** for managing Pull Requests and GitHub operations from the command line:
+
+### Common Commands
+
+- **Create a Pull Request**:
+  ```bash
+  gh pr create --title "Add feature X" --body "Description of changes"
+  ```
+
+- **List Pull Requests**:
+  ```bash
+  gh pr list
+  ```
+
+- **View Pull Request details**:
+  ```bash
+  gh pr view [PR number]
+  ```
+
+- **Merge a Pull Request**:
+  ```bash
+  gh pr merge [PR number]
+  ```
+
+- **Check authentication status**:
+  ```bash
+  gh auth status
+  ```
+
+### Authentication
+
+GitHub CLI is pre-authenticated in the DevContainer. If you need to re-authenticate:
+
+```bash
+gh auth login
+```
+
+**Security recommendation**: Use a [Fine-grained Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) restricted to this repository only.
+
+For more details, see the [GitHub CLI documentation](https://cli.github.com/).
+
 ## Important Notes
 
 - Jupyter and ipykernel are included as dependencies for notebook support
