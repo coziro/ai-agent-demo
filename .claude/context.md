@@ -46,9 +46,13 @@
 - [x] context.mdに作業内容を記録（完了）
 - [x] references.mdにLangGraph v1.0関連ドキュメントを追加（完了）
 - [x] langraphパッケージをインストール（完了：v1.0.1）
-- [ ] app.py を app_langchain.py にリネーム
-- [ ] app_langgraph.py を新規作成（LangGraph版の実装）
-- [ ] 両方のアプリで動作確認
+- [x] app.py を app_langchain.py にリネーム（完了）
+- [x] app_langgraph.py を新規作成（完了：基本実装）
+- [ ] **app_langgraph.pyの機能追加（app_langchain.pyと同等に）**
+  - [ ] 1. システムメッセージの追加
+  - [ ] 2. 会話履歴保持の実装
+  - [ ] 3. ストリーミングレスポンスの実装
+- [ ] 両方のアプリで動作確認（LangChain版、LangGraph版）
 - [ ] README.mdに起動方法を追記
 - [ ] decisions.mdにLangGraph採用の設計決定を記録
 - [ ] Pull Request作成
