@@ -25,7 +25,87 @@
 
 ### 進行中のタスク
 
-現在進行中のタスクはありません。
+#### LangGraphを使ったAIエージェント実装（最小限版） - 開始日: 2025-10-27
+
+**目的:**
+- 現状のapp.pyと同等の機能をLangGraphで実装
+- LangGraphの基礎を学ぶ（StateGraph、ストリーミング対応）
+- LangChain版とLangGraph版を比較できるようにする
+
+**実装方針:**
+- **実装レベル**: 最小限のLangGraph（StateGraph + 単一ノードで会話管理）
+- **ファイル構成**: 別ファイルで実装（app_langchain.py と app_langgraph.py の2つ）
+- **学習方針**: 実装重視（コメントで説明追加、必要に応じて後でNotebook作成）
+- **起動方法**: コマンドで明示的に指定（`uv run chainlit run app_langchain.py` または `app_langgraph.py`）
+
+**ブランチ:** `feature/add-langgraph`（GitHub Flowに従う）
+
+**現在の状態:**
+- [x] LangGraphの公式ドキュメント調査（完了）
+- [x] feature/add-langgraphブランチ作成（完了）
+- [x] context.mdに作業内容を記録（完了）
+- [x] references.mdにLangGraph v1.0関連ドキュメントを追加（完了）
+- [x] langraphパッケージをインストール（完了：v1.0.1）
+- [ ] app.py を app_langchain.py にリネーム
+- [ ] app_langgraph.py を新規作成（LangGraph版の実装）
+- [ ] 両方のアプリで動作確認
+- [ ] README.mdに起動方法を追記
+- [ ] decisions.mdにLangGraph採用の設計決定を記録
+- [ ] Pull Request作成
+
+**自分でやること vs Claude Codeにお願いすること:**
+
+**自分でやる（学習目的）:**
+- app_langgraph.pyの実装理解とカスタマイズ
+- 両方のアプリでの動作確認・比較
+- PR作成後のレビュー・マージ判断
+
+**Claude Codeにお願いする:**
+- langraphパッケージのインストール（`uv add langgraph`）
+- app.pyのリネーム（`git mv app.py app_langchain.py`）
+- app_langgraph.pyの初期実装（StateGraph + ストリーミング）
+- ドキュメント更新（README.md、references.md、decisions.md）
+- PR作成（`gh pr create`）
+
+**技術的なポイント（調査済み）:**
+- **LangGraphインストール**: `pip install -U langgraph`（Python >=3.10）
+- **StateGraph**: 会話履歴を保持するStateクラス定義
+- **ストリーミング**: `stream_mode="messages"` でLLMトークンを逐次取得
+  ```python
+  for message_chunk, metadata in graph.stream(
+      {"topic": "ice cream"},
+      stream_mode="messages",
+  ):
+      if message_chunk.content:
+          print(message_chunk.content, end="|", flush=True)
+  ```
+- **Chainlit統合**: 既存のストリーミング機能（`msg.stream_token()`）を維持
+
+**忘れないように記録するサブタスク:**
+- **README.md更新**: 起動方法を追記
+  - LangChain版: `uv run chainlit run app_langchain.py`
+  - LangGraph版: `uv run chainlit run app_langgraph.py`
+- **references.md更新**: LangGraph公式ドキュメント、ストリーミング例、StateGraph基本などを追加
+- **decisions.md更新**: なぜLangGraphを採用したか、どのような実装方針にしたか記録
+
+**関連ファイル:**
+- [app.py](../app.py) → [app_langchain.py](../app_langchain.py)（リネーム予定）
+- [app_langgraph.py](../app_langgraph.py)（新規作成予定）
+- [pyproject.toml](../pyproject.toml) - langgraph依存関係追加
+- [README.md](../README.md) - 起動方法追記
+- [.claude/references.md](references.md) - LangGraph関連ドキュメント追加
+- [.claude/decisions.md](decisions.md) - 設計決定記録
+
+**ワークフロー確認（GitHub Flow）:**
+1. ✅ feature/add-langgraphブランチ作成
+2. ⏳ 開発・コミット（現在ここ）
+3. ⏳ Pull Request作成
+4. ⏳ レビュー・動作確認
+5. ⏳ mainにマージ（成功時）または ブランチ削除（失敗時）
+
+**メモ:**
+- GitHub Flowを忘れないように、作業開始前にCLAUDE.mdを確認する習慣をつける
+- コード変更は必ずfeatureブランチで行う（`.claude/context.md`, `todo.md`の更新は例外）
 
 ---
 

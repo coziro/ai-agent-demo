@@ -2,7 +2,7 @@
 
 このファイルには、プロジェクトに関連する重要なリンク、ドキュメント、参考資料を集約します。
 
-**最終更新:** 2025-10-26
+**最終更新:** 2025-10-27
 
 ---
 
@@ -10,12 +10,40 @@
 
 **このファイルの特性:** 長期的な参考資料の集約（増加傾向）
 
-**メンテナンスガイドライン:**
+### リンク追加の判断基準
+
+**✅ 追加すべきリンク:**
+- **外部の質の高いリソース**（Real Pythonのチュートリアルなど）
+- **統合ガイド**（異なるツール間の連携方法）
+- **見つけにくい重要な情報**（公式ドキュメントに埋もれている情報）
+- **頻繁に参照するツールの公式ドキュメント**（開発で日常的に使うツール）
+
+**❌ 追加すべきでないリンク:**
+- **公式ドキュメント内の個別ページ**（Quickstart、Installation、API Referenceなど）
+  - 理由: 公式サイトのナビゲーションから簡単にアクセスできる
+- **バージョン管理されていない古いドキュメント**
+  - 必ず最新バージョン（v1.0など）のドキュメントを参照する
+  - 古いドキュメントへの警告は不要（公式サイトに既に表示されている）
+- **頻繁に変更される情報**（リンク切れのリスクが高い）
+
+### 公式ドキュメントセクションのルール
+
+各ツール・フレームワークについて、以下のみを記載：
+- **公式ドキュメント（トップページ）**: 必須
+- **GitHub リポジトリ**: 必須
+- **PyPI（該当する場合）**: オプション
+
+個別ページ（QuickstartやAPI Referenceなど）は記載しない。
+
+### メンテナンスガイドライン
+
 - **古くなったリンク**: 定期的にリンク切れをチェックし、削除または更新
 - **重複**: 同じ内容のリンクは統合
 - **整理**: カテゴリが増えすぎたら、サブカテゴリを作成
+- **最終更新日**: リンクを追加・削除したら日付を更新
 
-**サイズ管理:**
+### サイズ管理
+
 - **500行を超えたら**: カテゴリ別にファイル分割を検討
   - 例: `.claude/references-llm.md`, `.claude/references-deployment.md`
 - **原則**: よく使うリンクにすぐアクセスできる構造を保つ
@@ -29,20 +57,24 @@
 
 ### Chainlit
 - **公式ドキュメント:** https://docs.chainlit.io/
-- **API リファレンス:** https://docs.chainlit.io/api-reference/overview
-- **Examples:** https://docs.chainlit.io/examples/community
 - **GitHub:** https://github.com/Chainlit/chainlit
 
-### LangChain
-- **公式ドキュメント:** https://python.langchain.com/
-- **API リファレンス:** https://python.langchain.com/api_reference/
-- **Concepts (コンセプト):** https://python.langchain.com/docs/concepts/
-- **How-to Guides:** https://python.langchain.com/docs/how_to/
+### LangChain (v1.0)
+- **公式ドキュメント (v1.0):** https://docs.langchain.com/oss/python/langchain/overview
 - **GitHub:** https://github.com/langchain-ai/langchain
+
+### LangGraph (v1.0)
+- **公式ドキュメント (v1.0):** https://docs.langchain.com/oss/python/langgraph/overview
+- **GitHub:** https://github.com/langchain-ai/langgraph
+- **PyPI:** https://pypi.org/project/langgraph/
 
 ### uv (Python パッケージマネージャー)
 - **公式ドキュメント:** https://docs.astral.sh/uv/
 - **GitHub:** https://github.com/astral-sh/uv
+
+### Ruff (Linter/Formatter)
+- **公式ドキュメント:** https://docs.astral.sh/ruff/
+- **GitHub:** https://github.com/astral-sh/ruff
 
 ### Python
 - **Python 3.12 ドキュメント:** https://docs.python.org/3.12/
@@ -51,25 +83,22 @@
 
 ## チュートリアル・ガイド
 
-### Chainlit関連
-- [Chainlit Quickstart](https://docs.chainlit.io/get-started/overview)
-- [Building a Chatbot](https://docs.chainlit.io/guides/chatbot)
-- [Streaming Responses](https://docs.chainlit.io/concepts/streaming)
-- [File Upload](https://docs.chainlit.io/concepts/file-upload)
-- [Authentication](https://docs.chainlit.io/authentication/overview)
 
 ### LLM統合
 - [OpenAI API ドキュメント](https://platform.openai.com/docs/)
 - [Anthropic API ドキュメント](https://docs.anthropic.com/)
 - [LlamaIndex ドキュメント](https://docs.llamaindex.ai/)
 
-### LangChain関連
-- [LangChain Quickstart](https://python.langchain.com/docs/get_started/quickstart) - 入門ガイド
-- [Messages](https://python.langchain.com/docs/concepts/messages/) - メッセージの概念（HumanMessage, AIMessage等）
-- [Chat Models](https://python.langchain.com/docs/concepts/chat_models/) - チャットモデルの使い方
-- [Streaming](https://python.langchain.com/docs/how_to/streaming/) - ストリーミングの実装方法
+### LangChain関連 (v1.0)
 - [LangChain + Chainlit Integration](https://docs.chainlit.io/integrations/langchain) - Chainlitとの統合ガイド
-- [AIMessageChunk API](https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.AIMessageChunk.html) - ストリーミング時のchunkオブジェクト
+
+### LangGraph関連 (v1.0)
+- [Real Python: Build Stateful AI Agents](https://realpython.com/langgraph-python/) - LangGraphの詳細チュートリアル (追加日: 2025-10-27)
+
+**v1.0の重要な変更点:**
+- メッセージ履歴は `TypedDict` の `Annotated[list[AnyMessage], operator.add]` で管理
+- ストリーミングは `stream_mode="updates"` または `stream_mode="messages"` を使用
+- Functional APIとGraph APIの2つのアプローチが提供される
 
 ### 日本語IME対応（国際化）
 - [Qiita: Chainlitの日本語入力で変換途中にEnterを押すとメッセージ送信されてしまう](https://qiita.com/bohemian916/items/4f3e860904c24922905a) - Chainlit特有の回避策 (追加日: 2025-10-25)
@@ -145,6 +174,62 @@ async def main(message: cl.Message):
 - `chunk.content` を使用（`.text` は非推奨）
 - 最初の `send()` は不要（`stream_token()` 初回呼び出し時に自動表示開始）
 - 最後の `send()` は必須（ストリーミング完了を通知、UI状態を更新）
+
+### LangGraph v1.0の基本パターン
+
+#### 状態の定義（TypedDict）
+```python
+from typing import Annotated, TypedDict
+from langchain_core.messages import AnyMessage
+import operator
+
+class MessagesState(TypedDict):
+    """会話履歴を保持する状態クラス"""
+    messages: Annotated[list[AnyMessage], operator.add]
+```
+
+**ポイント:**
+- `Annotated[list[AnyMessage], operator.add]` により、新しいメッセージが既存のリストに追加される
+- `operator.add` は状態の更新方法を指定（リストの結合）
+
+#### シンプルなグラフの作成（Graph API）
+```python
+from langgraph.graph import StateGraph
+from langchain_openai import ChatOpenAI
+
+# LLMモデルの初期化
+model = ChatOpenAI(model="gpt-5-nano")
+
+# ノード関数の定義
+def call_model(state: MessagesState):
+    """LLMを呼び出してレスポンスを生成"""
+    response = model.invoke(state["messages"])
+    return {"messages": [response]}
+
+# グラフの構築
+graph_builder = StateGraph(MessagesState)
+graph_builder.add_node("model", call_model)
+graph_builder.set_entry_point("model")
+graph_builder.set_finish_point("model")
+
+# グラフのコンパイル
+graph = graph_builder.compile()
+```
+
+#### ストリーミングの実装（Graph API）
+```python
+# stream_mode="updates" でノードごとの更新を取得
+for chunk in graph.stream(
+    {"messages": [{"role": "user", "content": "Hello!"}]},
+    stream_mode="updates"
+):
+    print(chunk)
+```
+
+**利用可能なstream modes:**
+- `"values"`: 各ステップ後の完全な状態
+- `"updates"`: 各ノードからの更新のみ
+- `"messages"`: LLMトークンの逐次ストリーミング（LangChain統合時）
 
 ### 日本語IME対応パターン
 
