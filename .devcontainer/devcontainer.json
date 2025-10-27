@@ -11,7 +11,8 @@
         "ms-toolsai.jupyter",
         "anthropic.claude-code",
         "tamasfe.even-better-toml",
-        "charliermarsh.ruff"
+        "charliermarsh.ruff",
+        "yzhang.markdown-all-in-one"
       ]
     }
   }
