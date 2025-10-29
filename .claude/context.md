@@ -25,33 +25,34 @@
 
 ### 進行中のタスク
 
-#### LangGraphを使ったAIエージェント実装（最小限版） - 開始日: 2025-10-27
+#### LangGraphを使ったAIエージェント実装（基本版） - 開始日: 2025-10-27
 
 **目的:**
-- 現状のapp.pyと同等の機能をLangGraphで実装
-- LangGraphの基礎を学ぶ（StateGraph、ストリーミング対応）
+- 現状のapp.pyと同等の機能をLangGraphで実装（段階的に）
+- LangGraphの基礎を学ぶ（StateGraph、非同期処理）
 - LangChain版とLangGraph版を比較できるようにする
 
-**実装方針:**
-- **実装レベル**: 最小限のLangGraph（StateGraph + 単一ノードで会話管理）
+**実装方針（計画変更）:**
+- **Phase 1**: 基本機能（システムメッセージ、会話履歴保持）← 今回
+- **Phase 2**: ストリーミング対応 ← 次のタスク
 - **ファイル構成**: 別ファイルで実装（app_langchain.py と app_langgraph.py の2つ）
-- **学習方針**: 実装重視（コメントで説明追加、必要に応じて後でNotebook作成）
+- **学習方針**: 段階的実装で理解を深める
 - **起動方法**: コマンドで明示的に指定（`uv run chainlit run app_langchain.py` または `app_langgraph.py`）
 
 **ブランチ:** `feature/add-langgraph`（GitHub Flowに従う）
 
-**現在の状態:**
+**Phase 1の状態（基本機能）:**
 - [x] LangGraphの公式ドキュメント調査（完了）
-- [x] feature/add-langgraphブランチ作成（完了）
+- [x] feature/add-langgraphブランch作成（完了）
 - [x] context.mdに作業内容を記録（完了）
 - [x] references.mdにLangGraph v1.0関連ドキュメントを追加（完了）
 - [x] langraphパッケージをインストール（完了：v1.0.1）
 - [x] app.py を app_langchain.py にリネーム（完了）
-- [x] app_langgraph.py を新規作成（完了：基本実装）
-- [ ] **app_langgraph.pyの機能追加（app_langchain.pyと同等に）**
-  - [ ] 1. システムメッセージの追加
-  - [ ] 2. 会話履歴保持の実装
-  - [ ] 3. ストリーミングレスポンスの実装
+- [x] app_langgraph.py を新規作成（完了）
+- [x] app_langgraph.pyの基本機能実装
+  - [x] 1. システムメッセージの追加
+  - [x] 2. 会話履歴保持の実装
+  - [x] 3. 非同期処理の実装（async/await）
 - [ ] 両方のアプリで動作確認（LangChain版、LangGraph版）
 - [ ] README.mdに起動方法を追記
 - [ ] decisions.mdにLangGraph採用の設計決定を記録
@@ -74,7 +75,11 @@
 **技術的なポイント（調査済み）:**
 - **LangGraphインストール**: `pip install -U langgraph`（Python >=3.10）
 - **StateGraph**: 会話履歴を保持するStateクラス定義
-- **ストリーミング**: `stream_mode="messages"` でLLMトークンを逐次取得
+- **非同期処理の重要性**:
+  - LLM呼び出しはI/O操作なので、ノード関数は`async def`で実装推奨
+  - `await model.ainvoke()`を使用することで、複数ユーザーの同時実行を効率化
+  - 1ユーザーでは差が見えないが、複数ユーザーではパフォーマンスが大幅に向上
+- **ストリーミング（Phase 2で実装予定）**: `stream_mode="messages"` でLLMトークンを逐次取得
   ```python
   for message_chunk, metadata in graph.stream(
       {"topic": "ice cream"},

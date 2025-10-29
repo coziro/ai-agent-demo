@@ -5,7 +5,7 @@ A conversational AI chatbot built with Chainlit and LangChain.
 ## Tech Stack
 
 - **UI Framework**: [Chainlit](https://docs.chainlit.io/) - Conversational AI interface
-- **LLM Framework**: [LangChain](https://python.langchain.com/) - LLM application framework
+- **LLM Framework**: [LangChain](https://python.langchain.com/) + [LangGraph](https://langchain-ai.github.io/langgraph/) - LLM application framework
 - **LLM Provider**: OpenAI (GPT-5-nano)
 - **Language**: Python 3.12
 - **Package Manager**: [uv](https://docs.astral.sh/uv/) - Fast Python package manager
@@ -81,8 +81,17 @@ For developers who want to modify the code:
    - Wait for the container to build (dependencies are installed automatically)
 
 4. **Run the Application**
+
+   This project includes two implementations to compare LangChain and LangGraph:
+
+   **LangChain version (with streaming):**
    ```bash
-   uv run chainlit run app.py
+   uv run chainlit run app_langchain.py
+   ```
+
+   **LangGraph version (basic graph implementation):**
+   ```bash
+   uv run chainlit run app_langgraph.py
    ```
 
    The application will be available at: http://localhost:8000
@@ -103,7 +112,8 @@ ai-agent-demo/
 │   ├── todo.md             # Task management
 │   └── references.md       # Reference links and documentation
 ├── notebooks/              # Jupyter notebooks for experimentation
-├── app.py                  # Main Chainlit application
+├── app_langchain.py        # Chainlit app with LangChain (streaming)
+├── app_langgraph.py        # Chainlit app with LangGraph (basic)
 ├── chainlit.md             # Chainlit welcome screen
 ├── docker-compose.yml      # Docker Compose configuration
 ├── pyproject.toml          # Python dependencies
@@ -127,11 +137,14 @@ uv sync
 # 2. Run:
 uv sync
 
-# Run the app
-uv run chainlit run app.py
+# Run the app (LangChain version with streaming)
+uv run chainlit run app_langchain.py
+
+# Run the app (LangGraph version)
+uv run chainlit run app_langgraph.py
 
 # Run with auto-reload (development mode)
-uv run chainlit run app.py -w
+uv run chainlit run app_langchain.py -w
 ```
 
 ### Jupyter Notebooks
