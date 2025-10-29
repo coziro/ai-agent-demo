@@ -889,6 +889,50 @@ response = await agent.ainvoke({"messages": messages})
 
 ---
 
+### 実験用ノートブックの命名規則 - 2025-10-29
+
+**状況・課題:**
+- Jupyter notebookで実験的なコードを書く際、どれをgitにコミットすべきか、どれをローカルのみに留めるべきか曖昧だった
+- `langgraph_basic.ipynb`を誤ってPRに含めてしまった
+
+**検討した選択肢:**
+1. `*_experimental.ipynb` - 長すぎる
+2. `tmp_*.ipynb` - 短く、一時ファイルとして認識しやすい ✓
+3. `wip_*.ipynb` - Work In Progress、意図は明確
+4. `draft_*.ipynb` - 下書きという意図が明確
+5. サフィックス（`*_tmp.ipynb`など） - ファイル名の主題が前に来る
+
+**決定内容:**
+- **実験用/一時的なノートブックは `tmp_*.ipynb` という命名規則を採用**
+- **.gitignoreに `notebooks/tmp_*.ipynb` を追加**
+- **CLAUDE.mdに命名規則を記載**
+
+**理由:**
+- 短い（3文字）でタイプしやすい
+- `tmp`は一時的なファイルとして広く認識されている
+- プレフィックスなので、ディレクトリ内でソートした時に実験ファイルがまとまる
+- `.gitignore`で簡単に除外できる
+
+**運用ルール:**
+- **本番用ノートブック**: `descriptive_name.ipynb` （gitにコミット）
+- **実験用ノートブック**: `tmp_*.ipynb` （ローカルのみ、gitignoreで除外）
+
+**例:**
+- ✅ `langgraph_tutorial.ipynb` - 本番用（コミット）
+- ✅ `tmp_test.ipynb` - 実験用（コミットしない）
+- ✅ `tmp_langgraph.ipynb` - 実験用（コミットしない）
+
+**影響範囲:**
+- [.gitignore](../.gitignore) - `notebooks/tmp_*.ipynb` を追加
+- [CLAUDE.md](../CLAUDE.md) - 命名規則を記載
+
+**メリット:**
+- 誤って実験用ノートブックをコミットするリスクが減る
+- チーム全体で統一された規則
+- ファイル名を見ただけで、コミットすべきかどうか判断できる
+
+---
+
 ## 次に決めるべきこと
 
 このセクションには、**まだ決定していない重要な設計判断**を記録します。

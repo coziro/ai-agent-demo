@@ -22,6 +22,20 @@ Dependencies are defined in [pyproject.toml](pyproject.toml) and locked in `uv.l
 - **Run Chainlit app**: `uv run chainlit run app.py`
 - **Run Jupyter notebooks**: Open `.ipynb` files in [notebooks/](notebooks/) directory using VS Code's Jupyter extension
 
+### Jupyter Notebook Naming Convention
+
+To distinguish between production notebooks (committed to git) and experimental notebooks (local only):
+
+- **Production notebooks**: `descriptive_name.ipynb` - Committed to git, intended for team use
+- **Experimental/temporary notebooks**: `tmp_*.ipynb` - Local only, automatically ignored by git
+
+Examples:
+- ✅ `langgraph_tutorial.ipynb` - Production notebook (committed)
+- ✅ `tmp_test.ipynb` - Experimental notebook (gitignored)
+- ✅ `tmp_langgraph.ipynb` - Experimental notebook (gitignored)
+
+See [.claude/decisions.md](.claude/decisions.md) for the rationale behind this naming convention.
+
 ## Project Structure
 
 - **DevContainer configuration**: [.devcontainer/](.devcontainer/) - Contains Dockerfile and devcontainer.json for containerized development
