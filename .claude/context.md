@@ -25,7 +25,96 @@
 
 ### 進行中のタスク
 
-現在進行中のタスクはありません。
+#### LangGraphを使ったAIエージェント実装（基本版） - 開始日: 2025-10-27
+
+**目的:**
+- 現状のapp.pyと同等の機能をLangGraphで実装（段階的に）
+- LangGraphの基礎を学ぶ（StateGraph、非同期処理）
+- LangChain版とLangGraph版を比較できるようにする
+
+**実装方針（計画変更）:**
+- **Phase 1**: 基本機能（システムメッセージ、会話履歴保持）← 今回
+- **Phase 2**: ストリーミング対応 ← 次のタスク
+- **ファイル構成**: 別ファイルで実装（app_langchain.py と app_langgraph.py の2つ）
+- **学習方針**: 段階的実装で理解を深める
+- **起動方法**: コマンドで明示的に指定（`uv run chainlit run app_langchain.py` または `app_langgraph.py`）
+
+**ブランチ:** `feature/add-langgraph`（GitHub Flowに従う）
+
+**Phase 1の状態（基本機能）:**
+- [x] LangGraphの公式ドキュメント調査（完了）
+- [x] feature/add-langgraphブランch作成（完了）
+- [x] context.mdに作業内容を記録（完了）
+- [x] references.mdにLangGraph v1.0関連ドキュメントを追加（完了）
+- [x] langraphパッケージをインストール（完了：v1.0.1）
+- [x] app.py を app_langchain.py にリネーム（完了）
+- [x] app_langgraph.py を新規作成（完了）
+- [x] app_langgraph.pyの基本機能実装
+  - [x] 1. システムメッセージの追加
+  - [x] 2. 会話履歴保持の実装
+  - [x] 3. 非同期処理の実装（async/await）
+- [ ] 両方のアプリで動作確認（LangChain版、LangGraph版）
+- [ ] README.mdに起動方法を追記
+- [ ] decisions.mdにLangGraph採用の設計決定を記録
+- [ ] Pull Request作成
+
+**自分でやること vs Claude Codeにお願いすること:**
+
+**自分でやる（学習目的）:**
+- app_langgraph.pyの実装理解とカスタマイズ
+- 両方のアプリでの動作確認・比較
+- PR作成後のレビュー・マージ判断
+
+**Claude Codeにお願いする:**
+- langraphパッケージのインストール（`uv add langgraph`）
+- app.pyのリネーム（`git mv app.py app_langchain.py`）
+- app_langgraph.pyの初期実装（StateGraph + ストリーミング）
+- ドキュメント更新（README.md、references.md、decisions.md）
+- PR作成（`gh pr create`）
+
+**技術的なポイント（調査済み）:**
+- **LangGraphインストール**: `pip install -U langgraph`（Python >=3.10）
+- **StateGraph**: 会話履歴を保持するStateクラス定義
+- **非同期処理の重要性**:
+  - LLM呼び出しはI/O操作なので、ノード関数は`async def`で実装推奨
+  - `await model.ainvoke()`を使用することで、複数ユーザーの同時実行を効率化
+  - 1ユーザーでは差が見えないが、複数ユーザーではパフォーマンスが大幅に向上
+- **ストリーミング（Phase 2で実装予定）**: `stream_mode="messages"` でLLMトークンを逐次取得
+  ```python
+  for message_chunk, metadata in graph.stream(
+      {"topic": "ice cream"},
+      stream_mode="messages",
+  ):
+      if message_chunk.content:
+          print(message_chunk.content, end="|", flush=True)
+  ```
+- **Chainlit統合**: 既存のストリーミング機能（`msg.stream_token()`）を維持
+
+**忘れないように記録するサブタスク:**
+- **README.md更新**: 起動方法を追記
+  - LangChain版: `uv run chainlit run app_langchain.py`
+  - LangGraph版: `uv run chainlit run app_langgraph.py`
+- **references.md更新**: LangGraph公式ドキュメント、ストリーミング例、StateGraph基本などを追加
+- **decisions.md更新**: なぜLangGraphを採用したか、どのような実装方針にしたか記録
+
+**関連ファイル:**
+- [app.py](../app.py) → [app_langchain.py](../app_langchain.py)（リネーム予定）
+- [app_langgraph.py](../app_langgraph.py)（新規作成予定）
+- [pyproject.toml](../pyproject.toml) - langgraph依存関係追加
+- [README.md](../README.md) - 起動方法追記
+- [.claude/references.md](references.md) - LangGraph関連ドキュメント追加
+- [.claude/decisions.md](decisions.md) - 設計決定記録
+
+**ワークフロー確認（GitHub Flow）:**
+1. ✅ feature/add-langgraphブランチ作成
+2. ⏳ 開発・コミット（現在ここ）
+3. ⏳ Pull Request作成
+4. ⏳ レビュー・動作確認
+5. ⏳ mainにマージ（成功時）または ブランチ削除（失敗時）
+
+**メモ:**
+- GitHub Flowを忘れないように、作業開始前にCLAUDE.mdを確認する習慣をつける
+- コード変更は必ずfeatureブランチで行う（`.claude/context.md`, `todo.md`の更新は例外）
 
 ---
 

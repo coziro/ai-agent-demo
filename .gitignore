@@ -54,6 +54,9 @@ env/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# Experimental/temporary notebooks (use tmp_*.ipynb for local experiments)
+notebooks/tmp_*.ipynb
+
 # OS
 .DS_Store
 Thumbs.db

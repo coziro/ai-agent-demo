@@ -815,6 +815,122 @@ Add task: [タスク名]
 - この決定は、実際の開発で「todo.mdの軽微な更新にPRが必要か？」という疑問から生まれた
 - 実用的な判断基準を設けることで、開発者の負担を減らしつつ品質も維持
 
+### LangGraphの採用と段階的実装方針 - 2025-10-29
+
+**状況・課題:**
+- LangChainで基本的なチャット機能は実装できたが、より複雑なAIエージェント（複数ステップのタスク、条件分岐、ツール呼び出しなど）を構築したい
+- LangGraphの学習を兼ねて、段階的に機能を実装していく必要がある
+
+**検討した選択肢:**
+1. **LangChainのみで実装**: シンプルだが、複雑なエージェントには限界がある
+2. **LangGraphで一から実装**: 学習曲線が急で、いきなり複雑な実装は困難
+3. **段階的実装（Phase 1→2→3）**: 基本機能から始めて、徐々に高度な機能を追加 ✓
+
+**決定内容:**
+- **LangGraphを採用し、3フェーズで段階的に実装**
+  - Phase 1: 基本機能（システムメッセージ、会話履歴保持、非同期処理）
+  - Phase 2: ストリーミング対応
+  - Phase 3: 高度なエージェント（複数ノード、条件分岐、ツール呼び出し）
+- **LangChain版とLangGraph版の両方を保持**（app_langchain.py と app_langgraph.py）
+
+**理由:**
+- **段階的学習**: LangGraphの概念（StateGraph、ノード、エッジ）を1つずつ理解できる
+- **比較可能**: LangChain版とLangGraph版を並べて、違いを理解できる
+- **実用性**: Phase 1でも実用的なチャットアプリとして機能する
+- **将来の拡張性**: Phase 3で複雑なエージェントを構築する土台ができる
+
+**Phase 1の実装内容（完了）:**
+```python
+# LangGraphの基本構造
+from langgraph.graph import StateGraph, MessagesState, START, END
+
+# ノード関数（非同期）
+async def call_llm(state: MessagesState):
+    response = await model.ainvoke(state["messages"])
+    return {"messages": [response]}
+
+# グラフ構築
+graph = StateGraph(MessagesState)
+graph.add_node(call_llm)
+graph.add_edge(START, "call_llm")
+graph.add_edge("call_llm", END)
+agent = graph.compile()
+
+# 使用
+response = await agent.ainvoke({"messages": messages})
+```
+
+**技術的な学び:**
+- **非同期処理の重要性**:
+  - LLM呼び出しはI/O操作なので、ノード関数は`async def`で実装推奨
+  - `await model.ainvoke()`を使用することで、複数ユーザーの同時実行を効率化
+  - 1ユーザーでは差が見えないが、複数ユーザーではパフォーマンスが大幅に向上（30秒→3秒の事例も）
+- **StateGraph**: 会話履歴を保持するStateクラスを定義
+- **MessagesState**: LangGraphの組み込み状態、メッセージリストを自動管理
+
+**Phase 2の計画（ストリーミング対応）:**
+- `agent.astream()` を使用してLLMトークンを逐次取得
+- `stream_mode="messages"` でストリーミング設定
+- Chainlitの`msg.stream_token()`と統合
+
+**影響範囲:**
+- [app_langchain.py](../app_langchain.py) - LangChain版（既存）
+- [app_langgraph.py](../app_langgraph.py) - LangGraph版（新規）
+- [pyproject.toml](../pyproject.toml) - langgraph依存関係追加
+- [README.md](../README.md) - 起動方法を2つ記載
+
+**参考資料:**
+- LangGraph公式ドキュメント: https://langchain-ai.github.io/langgraph/
+- LangGraph v1.0リリース: context.md、references.mdに詳細記載
+- 非同期処理のベストプラクティス: Web検索結果より
+
+**ブランチ:**
+- feature/add-langgraph（GitHub Flowに従う）
+
+---
+
+### 実験用ノートブックの命名規則 - 2025-10-29
+
+**状況・課題:**
+- Jupyter notebookで実験的なコードを書く際、どれをgitにコミットすべきか、どれをローカルのみに留めるべきか曖昧だった
+- `langgraph_basic.ipynb`を誤ってPRに含めてしまった
+
+**検討した選択肢:**
+1. `*_experimental.ipynb` - 長すぎる
+2. `tmp_*.ipynb` - 短く、一時ファイルとして認識しやすい ✓
+3. `wip_*.ipynb` - Work In Progress、意図は明確
+4. `draft_*.ipynb` - 下書きという意図が明確
+5. サフィックス（`*_tmp.ipynb`など） - ファイル名の主題が前に来る
+
+**決定内容:**
+- **実験用/一時的なノートブックは `tmp_*.ipynb` という命名規則を採用**
+- **.gitignoreに `notebooks/tmp_*.ipynb` を追加**
+- **CLAUDE.mdに命名規則を記載**
+
+**理由:**
+- 短い（3文字）でタイプしやすい
+- `tmp`は一時的なファイルとして広く認識されている
+- プレフィックスなので、ディレクトリ内でソートした時に実験ファイルがまとまる
+- `.gitignore`で簡単に除外できる
+
+**運用ルール:**
+- **本番用ノートブック**: `descriptive_name.ipynb` （gitにコミット）
+- **実験用ノートブック**: `tmp_*.ipynb` （ローカルのみ、gitignoreで除外）
+
+**例:**
+- ✅ `langgraph_tutorial.ipynb` - 本番用（コミット）
+- ✅ `tmp_test.ipynb` - 実験用（コミットしない）
+- ✅ `tmp_langgraph.ipynb` - 実験用（コミットしない）
+
+**影響範囲:**
+- [.gitignore](../.gitignore) - `notebooks/tmp_*.ipynb` を追加
+- [CLAUDE.md](../CLAUDE.md) - 命名規則を記載
+
+**メリット:**
+- 誤って実験用ノートブックをコミットするリスクが減る
+- チーム全体で統一された規則
+- ファイル名を見ただけで、コミットすべきかどうか判断できる
+
 ---
 
 ## 次に決めるべきこと

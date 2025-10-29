@@ -22,6 +22,20 @@ Dependencies are defined in [pyproject.toml](pyproject.toml) and locked in `uv.l
 - **Run Chainlit app**: `uv run chainlit run app.py`
 - **Run Jupyter notebooks**: Open `.ipynb` files in [notebooks/](notebooks/) directory using VS Code's Jupyter extension
 
+### Jupyter Notebook Naming Convention
+
+To distinguish between production notebooks (committed to git) and experimental notebooks (local only):
+
+- **Production notebooks**: `descriptive_name.ipynb` - Committed to git, intended for team use
+- **Experimental/temporary notebooks**: `tmp_*.ipynb` - Local only, automatically ignored by git
+
+Examples:
+- ✅ `langgraph_tutorial.ipynb` - Production notebook (committed)
+- ✅ `tmp_test.ipynb` - Experimental notebook (gitignored)
+- ✅ `tmp_langgraph.ipynb` - Experimental notebook (gitignored)
+
+See [.claude/decisions.md](.claude/decisions.md) for the rationale behind this naming convention.
+
 ## Project Structure
 
 - **DevContainer configuration**: [.devcontainer/](.devcontainer/) - Contains Dockerfile and devcontainer.json for containerized development
@@ -84,41 +98,126 @@ This project follows **GitHub Flow** to maintain a stable main branch:
 - **Feature branches**: `feature/name`, `fix/name`, `refactor/name`
 - **No direct commits to main** (except emergency hotfixes)
 
-### Workflow Steps
+### Development Flow (Step-by-Step Process)
 
-1. **Create a feature branch from main**:
-   ```bash
-   git checkout main
-   git pull
-   git checkout -b feature/your-feature-name
-   ```
+**IMPORTANT: Follow this process for ALL code changes to avoid mistakes.**
 
-2. **Develop and commit on the feature branch**:
-   ```bash
-   git add .
-   git commit -m "Implement feature X"
-   ```
+#### Step 1: Select a Task from todo.md
 
-3. **Create a Pull Request**:
-   ```bash
-   gh pr create --title "Add feature X" --body "Description of changes"
-   ```
+- Open [.claude/todo.md](.claude/todo.md)
+- Choose a task to work on based on priority
+- Understand the task's purpose, dependencies, and scope
 
-4. **Review and test**:
-   - Review code changes (especially code written by Claude Code)
-   - Test locally to ensure functionality
-   - Check for regressions in existing features
+#### Step 2: Create a Feature Branch
 
-5. **Merge to main** (if successful):
-   ```bash
-   gh pr merge
-   ```
+**Before writing any code**, create a feature branch:
 
-6. **Delete branch** (if unsuccessful):
-   ```bash
-   git checkout main
-   git branch -D feature/failed-feature
-   ```
+```bash
+git checkout main
+git pull
+git checkout -b feature/your-feature-name
+```
+
+**Naming conventions:**
+- `feature/feature-name` - New features
+- `fix/bug-name` - Bug fixes
+- `refactor/target-name` - Code refactoring
+
+#### Step 3: Plan Subtasks in context.md
+
+**Do NOT start implementation immediately.** First, break down the task:
+
+1. Document the task in [.claude/context.md](.claude/context.md) under "進行中のタスク"
+2. List all necessary subtasks
+3. Identify what you'll do vs. what Claude Code will do
+4. **Get user agreement** on the subtask plan before proceeding
+
+**Template for context.md:**
+```markdown
+#### [Task Name] - Start Date: YYYY-MM-DD
+
+**Purpose:**
+- What you're trying to achieve
+
+**Implementation Approach:**
+- Technical decisions and approach
+
+**Branch:** `feature/branch-name`
+
+**Current Status:**
+- [ ] Subtask 1
+- [ ] Subtask 2
+- [ ] Subtask 3
+
+**Your Work vs. Claude Code's Work:**
+
+**Your Work (Learning/Review):**
+- Items you want to do yourself
+
+**Claude Code's Work:**
+- Items to delegate to Claude Code
+
+**Next Steps:**
+1. Specific action 1
+2. Specific action 2
+
+**Related Files:**
+- [file1.py](file1.py)
+- [file2.py](file2.py)
+```
+
+#### Step 4: Execute Subtasks (With User Agreement)
+
+**CRITICAL RULES:**
+- ❌ **Do NOT execute subtasks immediately**
+- ✅ **Discuss the subtask plan with the user first**
+- ✅ **Get explicit confirmation** before starting implementation
+- ✅ **Clarify which subtasks the user wants to do themselves**
+
+**For each subtask:**
+1. Confirm it's ready to be executed
+2. Execute and test
+3. Update context.md with progress
+4. Commit changes with clear messages
+
+#### Step 5: Create a Pull Request
+
+```bash
+gh pr create --title "Add feature X" --body "Description of changes"
+```
+
+#### Step 6: Review and Test
+
+- Review code changes (especially code written by Claude Code)
+- Test locally to ensure functionality
+- Check for regressions in existing features
+
+#### Step 7: Merge or Discard
+
+**If successful:**
+```bash
+gh pr merge
+```
+
+**If unsuccessful:**
+```bash
+git checkout main
+git branch -D feature/failed-feature
+```
+
+### Quick Checklist (Before Starting ANY Work)
+
+Before writing code, ask yourself:
+
+- [ ] Have I selected a task from todo.md?
+- [ ] Am I on a feature branch? (Check with `git branch`)
+- [ ] Have I documented the plan in context.md?
+- [ ] Have I discussed the subtask plan with the user?
+- [ ] Do I have user agreement to proceed?
+
+**Exception (Direct commits to main allowed):**
+- Updates to context.md or todo.md only
+- Minor configuration changes (.gitignore, etc.)
 
 ### Pull Request Guidelines
 
