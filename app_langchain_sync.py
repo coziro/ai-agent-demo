@@ -1,6 +1,6 @@
 import chainlit as cl
+from langchain.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
-from langchain.messages import HumanMessage, SystemMessage, AIMessage
 
 model = ChatOpenAI(model="gpt-5-nano")
 
@@ -15,7 +15,7 @@ async def on_chat_start():
 @cl.on_message
 async def on_message(message: cl.Message):
     messages = cl.user_session.get("messages")
-    
+
     human_msg = HumanMessage(message.content)
     messages.append(human_msg)
 
