@@ -991,6 +991,125 @@ response = await agent.ainvoke({"messages": messages})
 - docker-compose.yml の更新（どの実装をデフォルトにするか）
 - ディレクトリ構成の見直し（`app_*.py`が増えた場合の整理方法）
 
+### エラーハンドリングの実装方針 - 2025-10-30
+
+**状況・課題:**
+- 3つのアプリファイル（`app_langchain_sync.py`、`app_langchain_streaming.py`、`app_langgraph_sync.py`）にエラーハンドリングが一切なかった
+- API呼び出しやセッション管理で発生するエラーがユーザーに伝わらず、アプリがクラッシュする問題
+- LangChainを使用している以上、将来的に他のLLMプロバイダー（Anthropic Claude、Google Geminiなど）に切り替える可能性がある
+- プロバイダー固有の例外クラス（`from openai import APIError`）に依存すると、プロバイダー変更時にコード修正が必要になる
+
+**検討した選択肢:**
+
+**1. プロバイダー固有の例外を個別にキャッチ:**
+```python
+from openai import APIError, AuthenticationError, RateLimitError
+except AuthenticationError:
+    # 個別処理
+except RateLimitError:
+    # 個別処理
+```
+- ❌ OpenAIに依存
+- ❌ プロバイダー変更時に全コード修正が必要
+- ✅ エラータイプ別に詳細な処理が可能
+
+**2. LangChain共通例外を使用:**
+- ❌ LangChainはプロバイダーの例外をラップしていない
+- ❌ LangChain独自の例外は内部機能用のみ（OutputParserExceptionなど）
+- LangChainの設計思想: プロバイダーの例外をそのまま発生させる
+
+**3. 広範な `Exception` キャッチでプロバイダー非依存に:**
+```python
+except Exception as e:
+    await cl.ErrorMessage(content=str(e)).send()
+```
+- ✅ プロバイダー非依存
+- ✅ シンプル
+- ✅ エラーメッセージはプロバイダー提供の高品質なもの
+- ⚠️ エラータイプ別の処理はできない
+
+**4. LangChainの `with_retry()` や `with_fallbacks()` を使用:**
+```python
+model = ChatOpenAI(...).with_retry(...)
+```
+- ✅ プロバイダー非依存
+- ✅ 一時的なエラーに自動対応
+- ⚠️ 全ての例外をリトライするため、無駄なリトライが発生する可能性
+
+**決定内容:**
+- **選択肢3を採用**: 広範な `Exception` キャッチでプロバイダー非依存
+- **リトライ機能（選択肢4）は別タスク**: 優先度は低く、後で検討
+- **エラーメッセージ**: プロバイダー提供の `str(e)` をそのまま使用（自分で書かない）
+
+**実装パターン:**
+```python
+@cl.on_message
+async def on_message(message: cl.Message):
+    try:
+        messages = cl.user_session.get("messages")
+        if messages is None:
+            await cl.ErrorMessage(
+                content="Session not initialized. Please reload the page."
+            ).send()
+            return
+
+        messages.append(HumanMessage(message.content))
+        response = await model.ainvoke(messages)
+        messages.append(AIMessage(response.content))
+        await cl.Message(content=response.content).send()
+
+    except Exception as e:
+        await cl.ErrorMessage(content=str(e)).send()
+```
+
+**理由:**
+
+1. **プロバイダー非依存:**
+   - `from openai import APIError` を使わない
+   - OpenAI、Anthropic、Google、ローカルモデルなど、どのプロバイダーでも動作
+   - プロバイダー変更時にエラーハンドリングコードの修正不要
+
+2. **エラーメッセージを自分で書かない:**
+   - OpenAIなどのプロバイダーが提供するエラーメッセージは既に高品質
+   - 実際のメッセージ例:
+     - 認証エラー: "Incorrect API key provided: sk-xxxxx. You can find your API key at https://platform.openai.com/account/api-keys."
+     - レート制限: "Rate limit exceeded. Please retry after 20 seconds."
+     - コンテキスト長超過: "This model's maximum context length is 4096 tokens. However, your messages resulted in 5000 tokens."
+   - プロフェッショナルな品質で、具体的なアクションが含まれる
+   - プロバイダーがメッセージを改善すると自動的に反映される
+   - メンテナンス不要
+
+3. **シンプルさ:**
+   - コード量が最小限（約15-20行の追加）
+   - 各エラータイプに対して個別のメッセージを書く必要がない
+   - メンテナンスコストが低い
+
+4. **LangChainの設計思想との整合性:**
+   - LangChainはプロバイダーの例外をラップせず、そのまま発生させる設計
+   - `with_retry()` や `with_fallbacks()` でアプリケーション側がエラーを吸収する
+   - 今回は最低限のエラーハンドリングとし、リトライは別タスク
+
+**技術的な発見:**
+- **LangChainの例外階層**: LangChainは `LangChainException` を提供するが、これはパーサーやトレーサー用
+- **モデル呼び出しの例外**: `model.ainvoke()` や `model.astream()` で発生する例外は、各プロバイダーのSDKから直接発生（ラップなし）
+- **プロバイダー間の類似性**: OpenAIとAnthropicは同じクラス名（`BadRequestError`、`RateLimitError`）を使用するが、異なる名前空間で互換性なし
+
+**影響範囲:**
+- [app_langchain_sync.py](../app_langchain_sync.py) - 同期版エラーハンドリング追加
+- [app_langchain_streaming.py](../app_langchain_streaming.py) - ストリーミング版エラーハンドリング追加
+- [app_langgraph_sync.py](../app_langgraph_sync.py) - LangGraph版エラーハンドリング追加（レスポンス構造検証も含む）
+
+**今後の展開:**
+- **リトライ機能**: `with_retry()` の導入を別タスクとして検討（優先度: 低）
+- **ログ記録**: `logging` モジュールの導入を別タスクとして検討（優先度: 中）
+- **テスト**: エラーケースのテスト作成を別タスクとして検討（優先度: 中）
+
+**参考資料:**
+- LangChain例外定義: `langchain_core/exceptions.py`
+- LangChainリトライ実装: `langchain_core/runnables/retry.py`
+- OpenAI例外定義: `openai/_exceptions.py`
+- Anthropic例外定義: `anthropic/_exceptions.py`
+
 ---
 
 ## 次に決めるべきこと
