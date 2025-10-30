@@ -19,8 +19,26 @@ Dependencies are defined in [pyproject.toml](pyproject.toml) and locked in `uv.l
 ## Running Code
 
 - **Run main script**: `uv run python main.py`
-- **Run Chainlit app**: `uv run chainlit run app.py`
+- **Run Chainlit apps**: This project provides multiple implementations:
+  - `uv run chainlit run app_langchain_sync.py` - LangChain + Sync (complete response at once)
+  - `uv run chainlit run app_langchain_streaming.py` - LangChain + Streaming (real-time token display)
+  - `uv run chainlit run app_langgraph_sync.py` - LangGraph + Sync (graph-based agent)
 - **Run Jupyter notebooks**: Open `.ipynb` files in [notebooks/](notebooks/) directory using VS Code's Jupyter extension
+
+### Implementation Matrix
+
+This project demonstrates different implementation patterns:
+
+|              | LangChain                     | LangGraph                |
+|--------------|-------------------------------|--------------------------|
+| **Sync**     | `app_langchain_sync.py`       | `app_langgraph_sync.py`  |
+| **Streaming**| `app_langchain_streaming.py`  | (Phase 2)                |
+
+**Terminology:**
+- **Sync**: Displays the complete response at once (uses `ainvoke()`)
+- **Streaming**: Displays tokens progressively in real-time (uses `astream()`)
+
+Note: Both versions use async/await for non-blocking I/O operations.
 
 ### Jupyter Notebook Naming Convention
 
@@ -41,7 +59,10 @@ See [.claude/decisions.md](.claude/decisions.md) for the rationale behind this n
 - **DevContainer configuration**: [.devcontainer/](.devcontainer/) - Contains Dockerfile and devcontainer.json for containerized development
 - **Notebooks**: [notebooks/](notebooks/) - Jupyter notebooks for experimentation and demos
 - **Main entry point**: [main.py](main.py) - Simple Python script entry point
-- **Chainlit app**: [app.py](app.py) - Chainlit chatbot application
+- **Chainlit apps**: Multiple implementations demonstrating different patterns
+  - [app_langchain_sync.py](app_langchain_sync.py) - LangChain + Sync
+  - [app_langchain_streaming.py](app_langchain_streaming.py) - LangChain + Streaming
+  - [app_langgraph_sync.py](app_langgraph_sync.py) - LangGraph + Sync
 - **Chainlit configuration**: [.chainlit/](.chainlit/) - Chainlit settings and translations
 - **Claude Code context**: [.claude/](.claude/) - Project context, decisions, and session notes for Claude Code
 
