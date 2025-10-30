@@ -931,6 +931,66 @@ response = await agent.ainvoke({"messages": messages})
 - チーム全体で統一された規則
 - ファイル名を見ただけで、コミットすべきかどうか判断できる
 
+### アプリファイルの命名規則 - 2025-10-30
+
+**状況・課題:**
+- 複数の実装パターン（LangChain/LangGraph × sync/streaming）が混在
+- ファイル名から実装方式が分かりにくい
+  - `app_langchain.py` → ストリーミング版だが名前からは不明
+  - `app_langgraph.py` → 同期版だが名前からは不明
+- プロジェクトを「実装例集」として発展させるため、明確な命名規則が必要
+
+**検討した選択肢:**
+1. **パターンA**: `app_{framework}_{mode}.py` (例: `app_langchain_sync.py`)
+2. **パターンB**: `examples/`ディレクトリに分ける (例: `examples/langchain/sync.py`)
+3. **パターンC**: 番号 + 説明的な名前 (例: `app_1_langchain_sync.py`)
+4. **パターンD**: ハイフン区切り (例: `app-langchain-sync.py`)
+
+**決定内容:**
+- **パターンAを採用**: `app_{framework}_{mode}.py`
+- 具体的なファイル名:
+  - `app_langchain_sync.py` - LangChain + 同期
+  - `app_langchain_streaming.py` - LangChain + ストリーミング
+  - `app_langgraph_sync.py` - LangGraph + 同期
+  - `app_langgraph_streaming.py` - LangGraph + ストリーミング（将来）
+
+**用語の定義:**
+- **sync（同期版）**: 完全なレスポンスを一度に表示（`ainvoke()`使用）
+- **streaming（ストリーミング版）**: トークンを逐次的に表示（`astream()`使用）
+- 注意: 両方とも `async/await` を使用した非同期処理
+- 「sync」は厳密には技術用語として不正確だが、ユーザー体験の観点から適切
+
+**理由:**
+- **ファイル名から一目で分かる**: フレームワークと実装方式が明確
+- **簡潔**: パターンBより短く、パターンCより意味が明確
+- **Pythonの慣習**: アンダースコア区切り（パターンDのハイフンではない）
+- **拡張性**: 将来的に他のパターン追加も容易
+
+**トレードオフ:**
+- ファイル名が長い（平均28文字）
+- しかし、明確さを優先
+
+**影響範囲:**
+- [app_langchain_sync.py](../app_langchain_sync.py) - 新規作成（git履歴から復元）
+- [app_langchain_streaming.py](../app_langchain_streaming.py) - リネーム
+- [app_langgraph_sync.py](../app_langgraph_sync.py) - リネーム
+- [README.md](../README.md) - 2×2実装マトリックス追加
+- [CLAUDE.md](../CLAUDE.md) - 起動方法更新
+
+**実装マトリックス:**
+|              | LangChain                     | LangGraph                |
+|--------------|-------------------------------|--------------------------|
+| **Sync**     | `app_langchain_sync.py`       | `app_langgraph_sync.py`  |
+| **Streaming**| `app_langchain_streaming.py`  | (Phase 2)                |
+
+**参考資料:**
+- 実装作業: Pull Request #4（コミット 8d8a651）
+- 用語に関する議論: context.mdに記録
+
+**今後の課題:**
+- docker-compose.yml の更新（どの実装をデフォルトにするか）
+- ディレクトリ構成の見直し（`app_*.py`が増えた場合の整理方法）
+
 ---
 
 ## 次に決めるべきこと

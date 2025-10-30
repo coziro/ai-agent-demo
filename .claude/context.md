@@ -2,7 +2,7 @@
 
 このファイルには、**今現在進行中の作業**を記録します。VS Codeを再起動したりコンテナをrebuildした後でも、ここを見れば作業を再開できます。
 
-**最終更新:** 2025-10-26
+**最終更新:** 2025-10-30
 
 ---
 
@@ -60,6 +60,42 @@
 ---
 
 ## 最近完了したタスク
+
+### ファイル整理とLangChain同期版の復元 - 2025-10-30
+
+**完了内容:**
+- ファイル名を統一命名規則に従って整理（sync/streaming）
+- app_langchain.py → app_langchain_streaming.py にリネーム
+- app_langgraph.py → app_langgraph_sync.py にリネーム
+- app_langchain_sync.py をgit履歴（コミット a55aecf）から復元
+- README.md、CLAUDE.md、.claude/todo.md を更新
+- 2×2実装マトリックスを確立（LangChain/LangGraph × sync/streaming）
+- Pull Request #4をマージ
+
+**実装マトリックス（現状）:**
+- ✅ LangChain + 同期（app_langchain_sync.py）
+- ✅ LangChain + ストリーミング（app_langchain_streaming.py）
+- ✅ LangGraph + 同期（app_langgraph_sync.py）
+- ⏳ LangGraph + ストリーミング（Phase 2で実装予定）
+
+**技術的な学び:**
+- **用語の整理**: "sync"は厳密には非同期処理だが、ユーザー体験の観点から「一度に表示」を意味する
+- **git履歴の活用**: 過去のコミットから必要なファイルを復元できる（`git show a55aecf:app.py`）
+- **命名規則の重要性**: ファイル名からすぐに実装方式が分かることで、プロジェクトの見通しが大幅に改善
+
+**成果物:**
+- [app_langchain_sync.py](../app_langchain_sync.py) - LangChain同期版（復元）
+- [app_langchain_streaming.py](../app_langchain_streaming.py) - LangChainストリーミング版（リネーム）
+- [app_langgraph_sync.py](../app_langgraph_sync.py) - LangGraph同期版（リネーム）
+- [README.md](../README.md) - 2×2マトリックス追加
+- [CLAUDE.md](../CLAUDE.md) - 起動方法更新
+- Pull Request #4（マージ済み、コミット 8d8a651）
+
+**今後のタスク:**
+- docker-compose.yml の更新（別タスクとして todo.md に記録済み）
+- LangGraphストリーミング版の実装（2×2マトリックス完成のため）
+
+---
 
 ### LangGraph Phase 1実装完了 - 2025-10-29
 
