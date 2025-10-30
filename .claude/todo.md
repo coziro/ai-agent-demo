@@ -98,6 +98,16 @@
 
 ### アーキテクチャ・構成
 
+- [ ] docker-compose.ymlの更新（app.pyから新ファイル名への変更）
+  - 目的: docker-compose upで起動するアプリを明確にする
+  - 現状の問題: docker-compose.ymlが`app.py`を参照しているが、このファイルは存在しない
+  - 検討事項:
+    - どの実装をデフォルトにするか（app_langchain_streaming.py推奨）
+    - または環境変数で選択可能にする
+  - 影響範囲: [docker-compose.yml](../docker-compose.yml)
+  - 見積もり: 30分
+  - メモ: ファイル整理後に対応（別タスク）
+
 - [ ] ディレクトリ構成の見直し
   - 目的: 複数の実装例を整理された形で提供
   - 現状の問題: `app_*.py`がトップディレクトリに散らばると見通しが悪い
@@ -107,33 +117,29 @@
     - Chainlit起動方法の統一
   - 影響範囲: プロジェクト全体
   - 見積もり: 2-3時間（設計+実装+ドキュメント更新）
-  - メモ: 実装パターン追加前に決定すべき
+  - メモ: 将来的な検討課題
 
-- [ ] プロジェクト目的の明確化とREADME更新
-  - 目的: 「LangChain/LangGraph実装例集」としてプロジェクトを再定義
-  - 実装内容:
-    - README.mdのプロジェクト説明を更新
-    - 各実装パターンの一覧表を追加
-    - 学習者向けの使い方ガイド
-  - 見積もり: 1時間
+- [x] プロジェクト目的の明確化とREADME更新（完了: 2025-10-30）
+  - README.mdに2×2実装マトリックスを追加
+  - 用語の定義（sync/streaming）を明記
+  - 各実装の起動方法を記載
 
 ### 実装パターンの拡充
 
 **目標: LangChain/LangGraphの2×2マトリックスを完成させる**
 
 現状:
-- ✅ LangChain + ストリーミング（app_langchain.py）
-- ✅ LangGraph + 同期（app_langgraph.py）
+- ✅ LangChain + 同期（app_langchain_sync.py）
+- ✅ LangChain + ストリーミング（app_langchain_streaming.py）
+- ✅ LangGraph + 同期（app_langgraph_sync.py）
 
 追加予定:
-- ❌ LangChain + 同期
 - ❌ LangGraph + ストリーミング
 
-- [ ] LangChain同期版の実装
-  - 目的: ストリーミング不要なシンプルなユースケース向け
-  - 実装内容: `model.invoke()`を使った同期実装
-  - 見積もり: 1時間
-  - 依存: ディレクトリ構成の決定
+- [x] LangChain同期版の実装（完了: 2025-10-30）
+  - git履歴（コミット a55aecf）から復元
+  - ファイル名を統一命名規則に従って整理
+  - 関連ファイル: [app_langchain_sync.py](../app_langchain_sync.py)
 
 - [ ] LangGraphストリーミング版の実装
   - 目的: LangGraphでリアルタイムレスポンスを実現
@@ -143,7 +149,6 @@
     - Chainlitの`msg.stream_token()`と統合
   - 見積もり: 2-3時間
   - 参考: context.mdに記載されているストリーミング実装例
-  - 依存: ディレクトリ構成の決定
 
 ### 機能拡張
 
