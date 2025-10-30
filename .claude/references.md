@@ -2,7 +2,7 @@
 
 このファイルには、プロジェクトに関連する重要なリンク、ドキュメント、参考資料を集約します。
 
-**最終更新:** 2025-10-27
+**最終更新:** 2025-10-30
 
 ---
 
@@ -94,6 +94,8 @@
 
 ### LangGraph関連 (v1.0)
 - [Real Python: Build Stateful AI Agents](https://realpython.com/langgraph-python/) - LangGraphの詳細チュートリアル (追加日: 2025-10-27)
+- [現場で活用するためのAIエージェント実践入門 (GitHub)](https://github.com/masamasa59/genai-agent-advanced-book/tree/main) - LangGraphの実装例が豊富 (追加日: 2025-10-30)
+- [LangAcademy - Quickstart: LangGraph Essentials - Python](https://academy.langchain.com/courses/langgraph-essentials-python) - LangChain公式のLangGraphコース (追加日: 2025-10-30)
 
 **v1.0の重要な変更点:**
 - メッセージ履歴は `TypedDict` の `Annotated[list[AnyMessage], operator.add]` で管理
