@@ -23,16 +23,17 @@ Dependencies are defined in [pyproject.toml](pyproject.toml) and locked in `uv.l
   - `uv run chainlit run app_langchain_sync.py` - LangChain + Sync (complete response at once)
   - `uv run chainlit run app_langchain_streaming.py` - LangChain + Streaming (real-time token display)
   - `uv run chainlit run app_langgraph_sync.py` - LangGraph + Sync (graph-based agent)
+  - `uv run chainlit run app_langgraph_streaming.py` - LangGraph + Streaming (graph-based + real-time)
 - **Run Jupyter notebooks**: Open `.ipynb` files in [notebooks/](notebooks/) directory using VS Code's Jupyter extension
 
 ### Implementation Matrix
 
 This project demonstrates different implementation patterns:
 
-|              | LangChain                     | LangGraph                |
-|--------------|-------------------------------|--------------------------|
-| **Sync**     | `app_langchain_sync.py`       | `app_langgraph_sync.py`  |
-| **Streaming**| `app_langchain_streaming.py`  | (Phase 2)                |
+|              | LangChain                     | LangGraph                    |
+|--------------|-------------------------------|------------------------------|
+| **Sync**     | `app_langchain_sync.py`       | `app_langgraph_sync.py`      |
+| **Streaming**| `app_langchain_streaming.py`  | `app_langgraph_streaming.py` |
 
 **Terminology:**
 - **Sync**: Displays the complete response at once (uses `ainvoke()`)
@@ -63,6 +64,7 @@ See [.claude/decisions.md](.claude/decisions.md) for the rationale behind this n
   - [app_langchain_sync.py](app_langchain_sync.py) - LangChain + Sync
   - [app_langchain_streaming.py](app_langchain_streaming.py) - LangChain + Streaming
   - [app_langgraph_sync.py](app_langgraph_sync.py) - LangGraph + Sync
+  - [app_langgraph_streaming.py](app_langgraph_streaming.py) - LangGraph + Streaming
 - **Chainlit configuration**: [.chainlit/](.chainlit/) - Chainlit settings and translations
 - **Claude Code context**: [.claude/](.claude/) - Project context, decisions, and session notes for Claude Code
 

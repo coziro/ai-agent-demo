@@ -86,10 +86,10 @@ For developers who want to modify the code:
 
    **Implementation Matrix:**
 
-   |              | LangChain                     | LangGraph                |
-   |--------------|-------------------------------|--------------------------|
-   | **Sync**     | `app_langchain_sync.py`       | `app_langgraph_sync.py`  |
-   | **Streaming**| `app_langchain_streaming.py`  | (Phase 2)                |
+   |              | LangChain                     | LangGraph                    |
+   |--------------|-------------------------------|------------------------------|
+   | **Sync**     | `app_langchain_sync.py`       | `app_langgraph_sync.py`      |
+   | **Streaming**| `app_langchain_streaming.py`  | `app_langgraph_streaming.py` |
 
    **Terminology:**
    - **Sync**: Displays the complete response at once (uses `ainvoke()`)
@@ -107,6 +107,9 @@ For developers who want to modify the code:
 
    # LangGraph + Sync (graph-based agent)
    uv run chainlit run app_langgraph_sync.py
+
+   # LangGraph + Streaming (graph-based agent with real-time token display)
+   uv run chainlit run app_langgraph_streaming.py
    ```
 
    The application will be available at: http://localhost:8000
@@ -130,6 +133,7 @@ ai-agent-demo/
 ├── app_langchain_sync.py        # LangChain + Sync (complete response)
 ├── app_langchain_streaming.py   # LangChain + Streaming (real-time)
 ├── app_langgraph_sync.py        # LangGraph + Sync (graph-based agent)
+├── app_langgraph_streaming.py   # LangGraph + Streaming (graph-based + real-time)
 ├── chainlit.md             # Chainlit welcome screen
 ├── docker-compose.yml      # Docker Compose configuration
 ├── pyproject.toml          # Python dependencies
@@ -161,6 +165,9 @@ uv run chainlit run app_langchain_streaming.py
 
 # Run the app (LangGraph + Sync)
 uv run chainlit run app_langgraph_sync.py
+
+# Run the app (LangGraph + Streaming)
+uv run chainlit run app_langgraph_streaming.py
 
 # Run with auto-reload (development mode)
 uv run chainlit run app_langchain_streaming.py -w

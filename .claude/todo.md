@@ -26,7 +26,16 @@
 
 ## 進行中 (In Progress)
 
-現在進行中のタスクはありません。
+- [ ] LangGraphストリーミング版の実装（Phase 2a: シンプル版）
+  - ブランチ: `feature/add-langgraph-streaming`
+  - 実装者: ユーザー自身（学習目的）
+  - 実装内容:
+    - `app_langgraph_streaming.py`を作成
+    - `stream_mode="messages"`でトークン単位のストリーミング
+    - ノード関数内で`model.astream()`を使用
+    - Chainlitの`stream_token()`でリアルタイム表示
+  - 参考実装: [app_langchain_streaming.py](../app_langchain_streaming.py), [app_langgraph_sync.py](../app_langgraph_sync.py)
+  - 関連調査: context.mdに詳細な調査結果を記録済み
 
 ---
 
@@ -87,6 +96,29 @@
 
 ### コード品質・信頼性の向上
 
+- [ ] 既存実装のリファクタリング（コード品質向上）
+  - 目的: 無駄な処理の削除、型ヒントの追加、変数名の整理
+  - 対象ファイル:
+    - [app_langchain_sync.py](../app_langchain_sync.py)
+    - [app_langchain_streaming.py](../app_langchain_streaming.py)
+    - [app_langgraph_sync.py](../app_langgraph_sync.py)
+    - [app_langgraph_streaming.py](../app_langgraph_streaming.py)（実装後）
+  - 具体的な改善項目:
+    1. **無駄な処理の削除**:
+       - `AIMessage(last_message.content)` の再作成を削除（LangGraph版）
+       - `response["messages"]` をそのまま使う（LangGraphが管理した履歴を活用）
+    2. **型ヒントの追加**:
+       - 関数の引数・返り値に型ヒントを追加
+       - 変数にも適切な型アノテーションを追加
+       - 例: `messages: list[BaseMessage]`, `response: dict[str, Any]`
+    3. **変数名の整理**:
+       - 似たような変数名（`response`, `msg`, `message`, `messages`など）を整理
+       - より明確で区別しやすい名前に変更
+  - 見積もり: 2-3時間
+  - 依存: Phase 2a（LangGraphストリーミング実装）の完了
+  - メモ: 型チェック導入前に実施すると効果的
+  - 影響範囲: 4つの実装ファイル全て
+
 - [x] エラーハンドリングの追加（完了: 2025-10-31）
   - 基本的なエラーハンドリングを3つのファイルに追加
   - プロバイダー非依存な実装（広範な Exception キャッチ）
@@ -140,7 +172,7 @@
   - ファイル名を統一命名規則に従って整理
   - 関連ファイル: [app_langchain_sync.py](../app_langchain_sync.py)
 
-- [ ] LangGraphストリーミング版の実装
+- [ ] LangGraphストリーミング版の実装（Phase 2a: シンプル版） - **進行中**
   - 目的: LangGraphでリアルタイムレスポンスを実現
   - 実装内容:
     - `agent.astream()` を使用してLLMトークンを逐次取得
@@ -148,8 +180,34 @@
     - Chainlitの`msg.stream_token()`と統合
   - 見積もり: 2-3時間
   - 参考: context.mdに記載されているストリーミング実装例
+  - 状態: ユーザーが実装中
 
 ### 機能拡張
+
+- [ ] LangGraphストリーミング版の拡張（Phase 2b: 複数ノード + 進捗表示）
+  - 目的: 複数ノードの処理フローを可視化
+  - 実装内容:
+    - 複数ノードのグラフを作成（research → analysis → generation など）
+    - `stream_mode="updates"` でノード単位の進捗を取得
+    - Chainlitで「🔍 リサーチ中...」「📊 分析中...」などの進捗メッセージを表示
+    - 最終結果は一度に表示（トークンストリーミングなし）
+  - ファイル名案: `app_langgraph_multi_node.py`
+  - 見積もり: 3-4時間
+  - 依存: Phase 2aの完了
+  - メモ: 複雑なエージェントの実装例として提供
+
+- [ ] LangGraphストリーミング版の高度な実装（Phase 3: 進捗表示 + トークンストリーミング）
+  - 目的: ノード単位の進捗表示とトークン単位のストリーミングを組み合わせる
+  - 実装内容:
+    - 複数ノードのグラフ
+    - `stream_mode=["updates", "messages"]` で両方を同時に使用
+    - 進捗表示とリアルタイムレスポンスの両立
+    - タプル形式で返されるchunkを適切に処理
+  - ファイル名案: `app_langgraph_advanced.py`
+  - 見積もり: 4-5時間
+  - 依存: Phase 2bの完了
+  - メモ: 実践的なユースケースの例示、実装例集として価値が高い
+  - 参考: context.mdに詳細な実装パターンを記録済み
 
 - [ ] LangSmithの導入
   - 目的: LLM呼び出しのトレーシング、デバッグ、パフォーマンスモニタリング
