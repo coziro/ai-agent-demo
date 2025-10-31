@@ -991,6 +991,136 @@ response = await agent.ainvoke({"messages": messages})
 - docker-compose.yml の更新（どの実装をデフォルトにするか）
 - ディレクトリ構成の見直し（`app_*.py`が増えた場合の整理方法）
 
+---
+
+### LangGraphストリーミングの実装パターン - 2025-10-31
+
+**状況・課題:**
+- LangGraphで`stream_mode="messages"`を使ったトークン単位のストリーミングを実装する必要があった
+- 公式ドキュメントに実装の詳細が明記されておらず、試行錯誤が必要だった
+- 当初の理解が誤っており、エラーに遭遇: `Unsupported message type: <class 'async_generator'>`
+
+**検討した選択肢:**
+
+**1. ノード関数で`model.astream()`を直接返す（当初の誤解）:**
+```python
+async def call_llm(state: MessagesState):
+    response = model.astream(state["messages"])  # AsyncIterator
+    return {"messages": response}  # これが間違い
+```
+- ❌ `AsyncIterator`は`MessagesState`で受け入れられない
+- ❌ エラー: `Unsupported message type: <class 'async_generator'>`
+- ❌ LangGraphはメッセージオブジェクトを期待している
+
+**2. ノード関数内で手動でトークンを収集:**
+```python
+async def call_llm(state: MessagesState):
+    full_content = ""
+    async for chunk in model.astream(state["messages"]):
+        full_content += chunk.content
+    return {"messages": [AIMessage(content=full_content)]}
+```
+- ✅ 動作する
+- ❌ `stream_mode="messages"`のトークン単位ストリーミングが機能しない
+- ❌ 完全なメッセージしか返せない
+
+**3. `streaming=True` + `ainvoke()` + コールバック機構（正解）:**
+```python
+model = ChatOpenAI(model="gpt-5-nano", streaming=True)
+
+async def call_llm(state: MessagesState):
+    response = await model.ainvoke(state["messages"])
+    return {"messages": [response]}
+```
+- ✅ トークン単位のストリーミングが機能する
+- ✅ LangGraphのコールバック機構が自動的にトークンをキャプチャ
+- ✅ シンプルで理解しやすい
+
+**決定内容:**
+
+選択肢3を採用：**`streaming=True` + `ainvoke()` + LangGraphのコールバック機構**
+
+**実装の核心部分:**
+
+```python
+# 1. モデル初期化時にstreaming=Trueを設定
+model = ChatOpenAI(model="gpt-5-nano", streaming=True)
+
+# 2. ノード関数ではainvoke()を使用（astream()ではない）
+async def call_llm(state: MessagesState):
+    messages = state["messages"]
+    response = await model.ainvoke(messages)
+    return {"messages": [response]}
+
+# 3. stream_mode="messages"の返り値はタプル
+async for message, metadata in agent.astream(
+    {"messages": messages},
+    stream_mode="messages"
+):
+    if message.content:
+        await msg.stream_token(message.content)
+```
+
+**理由:**
+
+1. **`streaming=True`が必須:**
+   - これがないとLangChainがコールバックを発火しない
+   - LangGraphが`StreamMessagesHandler`でトークンをキャプチャできない
+
+2. **ノード関数では`ainvoke()`を使う:**
+   - ノード関数は`BaseMessage`オブジェクトを返す必要がある
+   - LangGraphが内部でコールバック経由でトークンを取得する
+   - `astream()`を返すと型エラーになる
+
+3. **LangGraphのコールバック機構:**
+   - `StreamMessagesHandler`が`on_llm_new_token`イベントをキャプチャ
+   - トークンごとに自動的にストリーミングに変換
+   - 開発者は意識する必要がない
+
+4. **`stream_mode="messages"`の返り値:**
+   - 単一モード: `(AIMessageChunk, metadata)`のタプル
+   - 複数モード: `(mode, data)`のタプル
+   - タプルをアンパックして処理する必要がある
+
+**技術的な仕組み:**
+
+```
+LangChain (streaming=True)
+    ↓
+ainvoke()実行中にon_llm_new_tokenコールバック発火
+    ↓
+LangGraph (StreamMessagesHandler)がキャプチャ
+    ↓
+agent.astream(stream_mode="messages")でトークン単位にストリーム
+    ↓
+Chainlit (stream_token())でリアルタイム表示
+```
+
+**影響範囲:**
+- [app_langgraph_streaming.py](../app_langgraph_streaming.py)
+- 将来のLangGraph実装（Phase 2b/3）
+
+**調査方法:**
+- LangGraphのソースコード調査（`langgraph/pregel/_messages.py`）
+- 実際のエラーメッセージを元に根本原因を特定
+- `MessagesState`の型定義を確認
+
+**参考資料:**
+- LangGraphソースコード: `StreamMessagesHandler`クラス
+- LangChainドキュメント: Streaming概念
+- context.md: 詳細な調査結果
+
+**今後の展開:**
+- Phase 2b: 複数ノード + `stream_mode="updates"`（ノード単位の進捗表示）
+- Phase 3: `stream_mode=["updates", "messages"]`（両方の組み合わせ）
+
+**重要な学び:**
+- 推測ではなく実際のソースコードを調査することの重要性
+- 公式ドキュメントだけでは不十分なケースがある
+- エラーメッセージを丁寧に読み、根本原因を特定する姿勢
+
+---
+
 ### エラーハンドリングの実装方針 - 2025-10-30
 
 **状況・課題:**
