@@ -25,94 +25,7 @@
 
 ### 進行中のタスク
 
-#### LangGraphストリーミング版の実装（Phase 2a: シンプル版） - 開始日: 2025-10-31
-
-**目的:**
-- 2×2実装マトリックスを完成させる（LangGraph + ストリーミング）
-- LangGraphの`stream_mode="messages"`を使ったトークン単位のストリーミングを学ぶ
-
-**実装方式:**
-- ユーザー自身が実装（学習目的）
-- Claude Codeは調査・準備作業のみ担当
-
-**調査完了事項:**
-1. **LangGraphのストリーミング処理の仕様理解**
-   - `stream_mode`の種類と使い分け（"values", "updates", "messages"）
-   - `stream_mode="messages"`: トークン単位のストリーミング（ChatGPT風）
-   - `stream_mode="updates"`: ノード単位の進捗表示
-   - `stream_mode="values"`: 完全な状態の取得
-
-2. **複数stream_modeの組み合わせが可能**
-   - `stream_mode=["updates", "messages"]` で配列指定
-   - 返り値が`(mode, data)`のタプル形式になる
-   - 公式機能として明確にサポート
-   - 複数ノードのエージェントでは一般的なパターン
-
-3. **段階的実装アプローチの策定**
-   - **Phase 2a**（今回）: シンプル版（`stream_mode="messages"`のみ）
-   - **Phase 2b**（将来）: 複数ノード + `stream_mode="updates"`
-   - **Phase 3**（将来）: 両方の組み合わせ `stream_mode=["updates", "messages"]`
-
-**実装の核心部分:**
-```python
-# ノード関数（重要な変更点）
-async def call_llm(state: MessagesState):
-    response = model.astream(state["messages"])  # astream（awaitなし！）
-    return {"messages": response}
-
-# @cl.on_message内
-async for chunk in agent.astream(
-    {"messages": messages},
-    stream_mode="messages"  # トークン単位のストリーミング
-):
-    if hasattr(chunk, 'content') and chunk.content:
-        await response_msg.stream_token(chunk.content)
-        full_response += chunk.content
-```
-
-**現在の状態:**
-- ✅ LangGraphストリーミング処理の仕様調査完了
-- ✅ context.mdに調査結果を記録
-- ✅ todo.mdに進行中タスクとPhase 2b/3を追加
-- ✅ ブランチ作成準備完了
-- ⏳ ユーザーが`app_langgraph_streaming.py`を実装中
-
-**次にやること:**
-1. ブランチ作成: `git checkout -b feature/add-langgraph-streaming`
-2. ユーザーが`app_langgraph_streaming.py`を実装
-3. テスト実行して動作確認
-4. ドキュメント更新（README.md、CLAUDE.md）
-5. コミット & PR作成
-
-**参考実装:**
-- [app_langchain_streaming.py](../app_langchain_streaming.py) - ストリーミングパターン
-- [app_langgraph_sync.py](../app_langgraph_sync.py) - LangGraphグラフ構築
-
-**ブランチ:**
-- `feature/add-langgraph-streaming`
-
-**関連ファイル:**
-- [app_langgraph_streaming.py](../app_langgraph_streaming.py) - 新規作成予定
-- [.claude/todo.md](todo.md) - Phase 2b/3を追加済み
-
-**重要な学び:**
-
-1. **ストリーミングの2つの種類:**
-   - **ノード単位のストリーミング**: 「今どのノードを処理しているか」を表示
-   - **トークン単位のストリーミング**: LLMの出力を文字ごとにリアルタイム表示
-
-2. **stream_modeの使い分け:**
-   - シンプルなチャット（1ノード）: `"messages"`のみ
-   - 複数ノードのエージェント: `["updates", "messages"]`で組み合わせ
-
-3. **実装の複雑さ:**
-   - シンプル版（messagesのみ）: 約15-20行
-   - 組み合わせ版: 約25-35行
-   - 実装コストは中程度で十分実用的
-
-4. **このパターンの一般性:**
-   - レアケースではなく、複数ノードのエージェントでは自然なニーズ
-   - LangGraphの公式機能として明確にサポート
+現在進行中のタスクはありません。
 
 ---
 
@@ -147,6 +60,60 @@ async for chunk in agent.astream(
 ---
 
 ## 最近完了したタスク
+
+### LangGraphストリーミング版の実装（Phase 2a） - 2025-10-31
+
+**完了内容:**
+- app_langgraph_streaming.pyを作成（トークン単位のストリーミング）
+- 2×2実装マトリックス完成（LangChain/LangGraph × sync/streaming）
+- README.md、CLAUDE.mdを更新
+- Pull Request #6をマージ
+
+**重要な技術的発見:**
+1. **`streaming=True`が必須**
+   - ChatOpenAI初期化時に`streaming=True`を設定しないとストリーミングが機能しない
+   - これがないとLangChainがコールバックを発火しない
+
+2. **ノード関数では`ainvoke()`を使用**
+   - `model.astream()`ではなく、`await model.ainvoke()`を使う
+   - ノード関数は`BaseMessage`オブジェクトを返す必要がある
+   - `AsyncIterator`を返すとエラー: `Unsupported message type: <class 'async_generator'>`
+
+3. **LangGraphのコールバック機構**
+   - LangGraphは`StreamMessagesHandler`でコールバックをキャプチャ
+   - `on_llm_new_token`イベントを通じてトークンを取得
+   - 自動的にストリーミングに変換してくれる
+
+4. **`stream_mode="messages"`の返り値**
+   - `(AIMessageChunk, metadata)`のタプルを返す
+   - タプルをアンパックして処理: `async for message, _ in agent.astream(...)`
+
+**当初の誤解と修正:**
+- 誤: ノード関数で`model.astream()`を返せばLangGraphが転送してくれる
+- 正: `model.ainvoke()`を使い、LangGraphがコールバック経由でトークンをキャプチャ
+
+**調査方法:**
+- LangGraphのソースコード調査（`langgraph/pregel/_messages.py`）
+- `MessagesState`の型定義確認
+- 実際のエラーを元に推測ではなく実装を確認
+
+**成果物:**
+- [app_langgraph_streaming.py](../app_langgraph_streaming.py)
+- [README.md](../README.md) - 実装マトリックス更新
+- [CLAUDE.md](../CLAUDE.md) - 起動コマンド追加
+- Pull Request #6（マージ済み）
+
+**今後のタスク:**
+- Phase 2b: 複数ノード + `stream_mode="updates"`
+- Phase 3: `stream_mode=["updates", "messages"]`の組み合わせ
+- リファクタリング（型ヒント、変数名、無駄な処理の削除）
+
+**技術的な学び:**
+- 推測ではなく実際のソースコード調査の重要性
+- 公式ドキュメントだけでは不十分なケースがある
+- エラーメッセージを丁寧に読み、根本原因を特定する
+
+---
 
 ### エラーハンドリングの追加（シンプル版） - 2025-10-31
 

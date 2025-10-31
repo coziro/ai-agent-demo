@@ -26,16 +26,7 @@
 
 ## 進行中 (In Progress)
 
-- [ ] LangGraphストリーミング版の実装（Phase 2a: シンプル版）
-  - ブランチ: `feature/add-langgraph-streaming`
-  - 実装者: ユーザー自身（学習目的）
-  - 実装内容:
-    - `app_langgraph_streaming.py`を作成
-    - `stream_mode="messages"`でトークン単位のストリーミング
-    - ノード関数内で`model.astream()`を使用
-    - Chainlitの`stream_token()`でリアルタイム表示
-  - 参考実装: [app_langchain_streaming.py](../app_langchain_streaming.py), [app_langgraph_sync.py](../app_langgraph_sync.py)
-  - 関連調査: context.mdに詳細な調査結果を記録済み
+現在進行中のタスクはありません。
 
 ---
 
@@ -159,28 +150,25 @@
 
 **目標: LangChain/LangGraphの2×2マトリックスを完成させる**
 
-現状:
+🎉 **2×2実装マトリックス完成！（2025-10-31完了）**
+
+完成状態:
 - ✅ LangChain + 同期（app_langchain_sync.py）
 - ✅ LangChain + ストリーミング（app_langchain_streaming.py）
 - ✅ LangGraph + 同期（app_langgraph_sync.py）
-
-追加予定:
-- ❌ LangGraph + ストリーミング
+- ✅ LangGraph + ストリーミング（app_langgraph_streaming.py）
 
 - [x] LangChain同期版の実装（完了: 2025-10-30）
   - git履歴（コミット a55aecf）から復元
   - ファイル名を統一命名規則に従って整理
   - 関連ファイル: [app_langchain_sync.py](../app_langchain_sync.py)
 
-- [ ] LangGraphストリーミング版の実装（Phase 2a: シンプル版） - **進行中**
-  - 目的: LangGraphでリアルタイムレスポンスを実現
-  - 実装内容:
-    - `agent.astream()` を使用してLLMトークンを逐次取得
-    - `stream_mode="messages"` でストリーミング設定
-    - Chainlitの`msg.stream_token()`と統合
-  - 見積もり: 2-3時間
-  - 参考: context.mdに記載されているストリーミング実装例
-  - 状態: ユーザーが実装中
+- [x] LangGraphストリーミング版の実装（Phase 2a: シンプル版）（完了: 2025-10-31）
+  - LangGraphでトークン単位のストリーミングを実現
+  - `stream_mode="messages"` でリアルタイムレスポンス
+  - 重要な発見: `streaming=True` + `ainvoke()` + コールバック機構
+  - 関連ファイル: [app_langgraph_streaming.py](../app_langgraph_streaming.py)
+  - Pull Request #6（マージ済み、コミット 32f4a76）
 
 ### 機能拡張
 
@@ -342,6 +330,19 @@
 ## 完了 (Completed)
 
 ### 2025-10-31
+
+- [x] LangGraphストリーミング版の実装（Phase 2a）
+  - app_langgraph_streaming.pyを作成（トークン単位のストリーミング）
+  - 2×2実装マトリックス完成（LangChain/LangGraph × sync/streaming）
+  - 重要な技術的発見:
+    - `streaming=True`がChatOpenAI初期化時に必須
+    - ノード関数では`ainvoke()`を使用（`astream()`ではない）
+    - LangGraphはコールバック機構でトークンをキャプチャ
+    - `stream_mode="messages"`は`(AIMessageChunk, metadata)`のタプルを返す
+  - 徹底的な調査により、当初の理解の誤りを発見・修正
+  - 関連ファイル: [app_langgraph_streaming.py](../app_langgraph_streaming.py), [README.md](../README.md), [CLAUDE.md](../CLAUDE.md), [.claude/context.md](context.md)
+  - Pull Request #6（マージ済み、コミット 32f4a76）
+  - 学び: 推測ではなく実際のソースコード調査の重要性、公式ドキュメントだけでは不十分なケースがある
 
 - [x] エラーハンドリングの追加（シンプル版）
   - 3つのChainlitアプリ全てにエラーハンドリングを追加（PR #5マージ済み）
