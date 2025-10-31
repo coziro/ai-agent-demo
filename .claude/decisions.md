@@ -1141,6 +1141,57 @@ messages = cl.user_session.get("messages")
 
 **本番運用コードの場合**: 防御的プログラミングとしてこのチェックを残すことも検討に値する。ただし、学習用コードではシンプルさを優先する。
 
+### LangGraphレスポンス検証について（2025-10-31 更新）
+
+当初、`app_langgraph_sync.py`に以下のレスポンス検証コードを実装していました:
+
+```python
+response = await agent.ainvoke({"messages": messages})
+
+if not response or "messages" not in response or not response["messages"]:
+    await cl.ErrorMessage(
+        content="Failed to get response from the model. Please try again."
+    ).send()
+    return
+```
+
+しかし、LangGraphのソースコード調査により、このコードが不要であることが判明したため削除しました。
+
+**調査結果:**
+
+1. **LangGraphの`ainvoke()`の動作:**
+   - `MessagesState`を使用している場合、常に`{"messages": [...]}`の構造を返す
+   - 理論上は`None`を返す可能性もあるが、現在のグラフ実装では発生しない
+   - ノードが無効な値を返しても、LangGraphは「更新なし」として前の状態を返す
+
+2. **エラー時の動作:**
+   - `model.ainvoke()`が例外を投げた場合 → 外側の`try-except`でキャッチされる
+   - レスポンス構造が無効になるケースは実際には発生しない
+
+3. **MessagesStateの保証:**
+   - `MessagesState`は型システムにより`"messages"`キーの存在を保証
+   - LangGraphは構造検証を行わないが、状態マージの仕組みにより構造は維持される
+
+**決定: レスポンス検証コードを削除**
+
+理由:
+1. **実際には発生しない**: 現在のグラフ実装では、レスポンス構造は常に有効
+2. **学習者を混乱させる**: LangGraphが無効な構造を返すと誤解させる可能性
+3. **外側のtry-exceptで十分**: 実際のエラー（モデル失敗、ネットワークエラーなど）は既にキャッチされている
+4. **テスト不可能**: この検証が役立つ状況を実際に再現できない
+5. **コードのシンプルさ優先**: 学習用コードでは本質的なエラーハンドリングに集中すべき
+
+削除後のコード:
+```python
+response = await agent.ainvoke({"messages": messages})
+last_message = response["messages"][-1].content
+```
+
+**参考:**
+- LangGraphソースコード調査: `langgraph/pregel/main.py` の`ainvoke()`実装
+- `MessagesState`定義: `langgraph/graph/message.py`
+- エラーコード定義: `langgraph/errors.py` (INVALID_GRAPH_NODE_RETURN_VALUEは定義されているが使用されていない)
+
 ---
 
 ## 次に決めるべきこと

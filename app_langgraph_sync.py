@@ -34,13 +34,6 @@ async def on_message(msg: cl.Message):
         messages.append(human_msg)
 
         response = await agent.ainvoke({"messages": messages})
-
-        if not response or "messages" not in response or not response["messages"]:
-            await cl.ErrorMessage(
-                content="Failed to get response from the model. Please try again."
-            ).send()
-            return
-
         last_message = response["messages"][-1].content
         ai_msg = AIMessage(last_message)
         messages.append(ai_msg)
