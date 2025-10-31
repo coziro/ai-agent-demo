@@ -2,7 +2,7 @@
 
 このファイルには、今後やるべきタスクを記録します。優先順位をつけて管理しましょう。
 
-**最終更新:** 2025-10-29（Phase 1完了、タスク整理）
+**最終更新:** 2025-10-31（エラーハンドリング完了、タスク整理）
 
 ---
 
@@ -87,31 +87,13 @@
 
 ### コード品質・信頼性の向上
 
-- [x] エラーハンドリングの追加（完了: 2025-10-30）
+- [x] エラーハンドリングの追加（完了: 2025-10-31）
   - 基本的なエラーハンドリングを3つのファイルに追加
   - プロバイダー非依存な実装（広範な Exception キャッチ）
   - エラーメッセージはプロバイダー提供のものを使用
+  - 不要な防御的コードを削除（セッション検証、LangGraphレスポンス検証）
   - 関連ファイル: [app_langchain_sync.py](../app_langchain_sync.py), [app_langchain_streaming.py](../app_langchain_streaming.py), [app_langgraph_sync.py](../app_langgraph_sync.py)
   - Pull Request #5
-
-- [ ] リトライ機能の追加（with_retry()）
-  - 目的: 一時的なネットワークエラーやレート制限に自動対応
-  - 実装内容:
-    - LangChainの `with_retry()` を使用してリトライ機構を追加
-    - 最大試行回数、バックオフ戦略の設定
-    - リトライ対象の例外タイプの選択
-  - 実装例:
-    ```python
-    model = ChatOpenAI(model="gpt-5-nano").with_retry(
-        retry_if_exception_type=(Exception,),
-        stop_after_attempt=3,
-        wait_exponential_jitter=True
-    )
-    ```
-  - 影響範囲: すべての実装ファイル
-  - 見積もり: 1-2時間
-  - 優先度: 低（まずは基本的なエラーハンドリングで様子を見る）
-  - 参考: [decisions.md](decisions.md) - エラーハンドリングの実装方針
 
 ### アーキテクチャ・構成
 
@@ -233,12 +215,31 @@
 - [ ] Loggingの仕組み導入
   - 目的: デバッグ・運用時のトラブルシューティング
   - 検討項目: loguru vs 標準logging
-  - 影響範囲: [app_langchain.py](../app_langchain.py)、[app_langgraph.py](../app_langgraph.py)、設定ファイル
+  - 影響範囲: [app_langchain_sync.py](../app_langchain_sync.py), [app_langchain_streaming.py](../app_langchain_streaming.py), [app_langgraph_sync.py](../app_langgraph_sync.py)、設定ファイル
   - 見積もり: 1時間
 
 ---
 
 ## 優先度: 低 (Low Priority)
+
+- [ ] リトライ機能の追加（with_retry()）
+  - 目的: 一時的なネットワークエラーやレート制限に自動対応
+  - 実装内容:
+    - LangChainの `with_retry()` を使用してリトライ機構を追加
+    - 最大試行回数、バックオフ戦略の設定
+    - リトライ対象の例外タイプの選択
+  - 実装例:
+    ```python
+    model = ChatOpenAI(model="gpt-5-nano").with_retry(
+        retry_if_exception_type=(Exception,),
+        stop_after_attempt=3,
+        wait_exponential_jitter=True
+    )
+    ```
+  - 影響範囲: すべての実装ファイル
+  - 見積もり: 1-2時間
+  - メモ: まずは基本的なエラーハンドリングで様子を見る
+  - 参考: [decisions.md](decisions.md) - エラーハンドリングの実装方針
 
 - [ ] GitHub ActionsでRuffの自動チェック
   - 目的: PR作成時に自動的にコード品質をチェック
@@ -281,6 +282,30 @@
 ---
 
 ## 完了 (Completed)
+
+### 2025-10-31
+
+- [x] エラーハンドリングの追加（シンプル版）
+  - 3つのChainlitアプリ全てにエラーハンドリングを追加（PR #5マージ済み）
+  - API呼び出しエラーをキャッチ（`try-except Exception`）
+  - プロバイダー非依存な実装（`str(e)`でエラーメッセージ表示）
+  - 不要な防御的コードを削除（セッション検証、LangGraphレスポンス検証）
+  - 学習用コードのシンプルさを優先
+  - 関連ファイル: [app_langchain_sync.py](../app_langchain_sync.py), [app_langchain_streaming.py](../app_langchain_streaming.py), [app_langgraph_sync.py](../app_langgraph_sync.py), [.claude/decisions.md](decisions.md)
+  - 学び: 調査の重要性（推測ではなく実際のテストとソースコード調査）、学習用コードではシンプルさを優先、本質的なエラーハンドリングに集中
+
+### 2025-10-30
+
+- [x] ファイル整理とLangChain同期版の復元
+  - ファイル名を統一命名規則に従って整理（`app_{framework}_{mode}.py`）
+  - app_langchain.py → app_langchain_streaming.py にリネーム
+  - app_langgraph.py → app_langgraph_sync.py にリネーム
+  - app_langchain_sync.py をgit履歴（コミット a55aecf）から復元
+  - README.md、CLAUDE.md、.claude/todo.md を更新
+  - 2×2実装マトリックスを確立（LangChain/LangGraph × sync/streaming）
+  - Pull Request #4をマージ
+  - 関連ファイル: [app_langchain_sync.py](../app_langchain_sync.py), [app_langchain_streaming.py](../app_langchain_streaming.py), [app_langgraph_sync.py](../app_langgraph_sync.py), [README.md](../README.md)
+  - 学び: git履歴の活用、命名規則の重要性、用語の整理（"sync" vs "streaming"）
 
 ### 2025-10-29
 
