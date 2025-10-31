@@ -87,14 +87,31 @@
 
 ### コード品質・信頼性の向上
 
-- [ ] エラーハンドリングの追加
-  - 目的: API エラー時の適切な処理、ユーザーへの適切なフィードバック
+- [x] エラーハンドリングの追加（完了: 2025-10-30）
+  - 基本的なエラーハンドリングを3つのファイルに追加
+  - プロバイダー非依存な実装（広範な Exception キャッチ）
+  - エラーメッセージはプロバイダー提供のものを使用
+  - 関連ファイル: [app_langchain_sync.py](../app_langchain_sync.py), [app_langchain_streaming.py](../app_langchain_streaming.py), [app_langgraph_sync.py](../app_langgraph_sync.py)
+  - Pull Request #5
+
+- [ ] リトライ機能の追加（with_retry()）
+  - 目的: 一時的なネットワークエラーやレート制限に自動対応
   - 実装内容:
-    - OpenAI APIエラーのハンドリング（レート制限、認証エラーなど）
-    - ネットワークエラーのハンドリング
-    - ユーザーフレンドリーなエラーメッセージ
+    - LangChainの `with_retry()` を使用してリトライ機構を追加
+    - 最大試行回数、バックオフ戦略の設定
+    - リトライ対象の例外タイプの選択
+  - 実装例:
+    ```python
+    model = ChatOpenAI(model="gpt-5-nano").with_retry(
+        retry_if_exception_type=(Exception,),
+        stop_after_attempt=3,
+        wait_exponential_jitter=True
+    )
+    ```
   - 影響範囲: すべての実装ファイル
-  - 見積もり: 2-3時間（全実装パターンに適用）
+  - 見積もり: 1-2時間
+  - 優先度: 低（まずは基本的なエラーハンドリングで様子を見る）
+  - 参考: [decisions.md](decisions.md) - エラーハンドリングの実装方針
 
 ### アーキテクチャ・構成
 

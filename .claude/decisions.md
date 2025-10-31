@@ -991,6 +991,207 @@ response = await agent.ainvoke({"messages": messages})
 - docker-compose.yml の更新（どの実装をデフォルトにするか）
 - ディレクトリ構成の見直し（`app_*.py`が増えた場合の整理方法）
 
+### エラーハンドリングの実装方針 - 2025-10-30
+
+**状況・課題:**
+- 3つのアプリファイル（`app_langchain_sync.py`、`app_langchain_streaming.py`、`app_langgraph_sync.py`）にエラーハンドリングが一切なかった
+- API呼び出しやセッション管理で発生するエラーがユーザーに伝わらず、アプリがクラッシュする問題
+- LangChainを使用している以上、将来的に他のLLMプロバイダー（Anthropic Claude、Google Geminiなど）に切り替える可能性がある
+- プロバイダー固有の例外クラス（`from openai import APIError`）に依存すると、プロバイダー変更時にコード修正が必要になる
+
+**検討した選択肢:**
+
+**1. プロバイダー固有の例外を個別にキャッチ:**
+```python
+from openai import APIError, AuthenticationError, RateLimitError
+except AuthenticationError:
+    # 個別処理
+except RateLimitError:
+    # 個別処理
+```
+- ❌ OpenAIに依存
+- ❌ プロバイダー変更時に全コード修正が必要
+- ✅ エラータイプ別に詳細な処理が可能
+
+**2. LangChain共通例外を使用:**
+- ❌ LangChainはプロバイダーの例外をラップしていない
+- ❌ LangChain独自の例外は内部機能用のみ（OutputParserExceptionなど）
+- LangChainの設計思想: プロバイダーの例外をそのまま発生させる
+
+**3. 広範な `Exception` キャッチでプロバイダー非依存に:**
+```python
+except Exception as e:
+    await cl.ErrorMessage(content=str(e)).send()
+```
+- ✅ プロバイダー非依存
+- ✅ シンプル
+- ✅ エラーメッセージはプロバイダー提供の高品質なもの
+- ⚠️ エラータイプ別の処理はできない
+
+**4. LangChainの `with_retry()` や `with_fallbacks()` を使用:**
+```python
+model = ChatOpenAI(...).with_retry(...)
+```
+- ✅ プロバイダー非依存
+- ✅ 一時的なエラーに自動対応
+- ⚠️ 全ての例外をリトライするため、無駄なリトライが発生する可能性
+
+**決定内容:**
+- **選択肢3を採用**: 広範な `Exception` キャッチでプロバイダー非依存
+- **リトライ機能（選択肢4）は別タスク**: 優先度は低く、後で検討
+- **エラーメッセージ**: プロバイダー提供の `str(e)` をそのまま使用（自分で書かない）
+
+**実装パターン:**
+```python
+@cl.on_message
+async def on_message(message: cl.Message):
+    try:
+        messages = cl.user_session.get("messages")
+        if messages is None:
+            await cl.ErrorMessage(
+                content="Session not initialized. Please reload the page."
+            ).send()
+            return
+
+        messages.append(HumanMessage(message.content))
+        response = await model.ainvoke(messages)
+        messages.append(AIMessage(response.content))
+        await cl.Message(content=response.content).send()
+
+    except Exception as e:
+        await cl.ErrorMessage(content=str(e)).send()
+```
+
+**理由:**
+
+1. **プロバイダー非依存:**
+   - `from openai import APIError` を使わない
+   - OpenAI、Anthropic、Google、ローカルモデルなど、どのプロバイダーでも動作
+   - プロバイダー変更時にエラーハンドリングコードの修正不要
+
+2. **エラーメッセージを自分で書かない:**
+   - OpenAIなどのプロバイダーが提供するエラーメッセージは既に高品質
+   - 実際のメッセージ例:
+     - 認証エラー: "Incorrect API key provided: sk-xxxxx. You can find your API key at https://platform.openai.com/account/api-keys."
+     - レート制限: "Rate limit exceeded. Please retry after 20 seconds."
+     - コンテキスト長超過: "This model's maximum context length is 4096 tokens. However, your messages resulted in 5000 tokens."
+   - プロフェッショナルな品質で、具体的なアクションが含まれる
+   - プロバイダーがメッセージを改善すると自動的に反映される
+   - メンテナンス不要
+
+3. **シンプルさ:**
+   - コード量が最小限（約15-20行の追加）
+   - 各エラータイプに対して個別のメッセージを書く必要がない
+   - メンテナンスコストが低い
+
+4. **LangChainの設計思想との整合性:**
+   - LangChainはプロバイダーの例外をラップせず、そのまま発生させる設計
+   - `with_retry()` や `with_fallbacks()` でアプリケーション側がエラーを吸収する
+   - 今回は最低限のエラーハンドリングとし、リトライは別タスク
+
+**技術的な発見:**
+- **LangChainの例外階層**: LangChainは `LangChainException` を提供するが、これはパーサーやトレーサー用
+- **モデル呼び出しの例外**: `model.ainvoke()` や `model.astream()` で発生する例外は、各プロバイダーのSDKから直接発生（ラップなし）
+- **プロバイダー間の類似性**: OpenAIとAnthropicは同じクラス名（`BadRequestError`、`RateLimitError`）を使用するが、異なる名前空間で互換性なし
+
+**影響範囲:**
+- [app_langchain_sync.py](../app_langchain_sync.py) - 同期版エラーハンドリング追加
+- [app_langchain_streaming.py](../app_langchain_streaming.py) - ストリーミング版エラーハンドリング追加
+- [app_langgraph_sync.py](../app_langgraph_sync.py) - LangGraph版エラーハンドリング追加（レスポンス構造検証も含む）
+
+**今後の展開:**
+- **リトライ機能**: `with_retry()` の導入を別タスクとして検討（優先度: 低）
+- **ログ記録**: `logging` モジュールの導入を別タスクとして検討（優先度: 中）
+- **テスト**: エラーケースのテスト作成を別タスクとして検討（優先度: 中）
+
+**参考資料:**
+- LangChain例外定義: `langchain_core/exceptions.py`
+- LangChainリトライ実装: `langchain_core/runnables/retry.py`
+- OpenAI例外定義: `openai/_exceptions.py`
+- Anthropic例外定義: `anthropic/_exceptions.py`
+
+### セッション検証について（2025-10-31 更新）
+
+当初、`messages is None`のチェックを実装したが、実際のテストで以下が判明:
+
+**テスト結果:**
+- Chainlitはページリロード時に自動的に`@cl.on_chat_start`を再実行する
+- サーバー再起動後もエラーが発生しない（Chainlitが自動的にセッションを再確立）
+- 実運用で`messages is None`は極めて発生しにくい
+
+**決定: セッション検証コードを削除**
+
+理由:
+1. **実際には発生しない**: ユーザーテストで、リロード・サーバー再起動いずれでもエラーが発生しないことを確認
+2. **学習用コードの目的**: 本質的なエラーハンドリング（API呼び出しエラー）を学ぶことが目的
+3. **コードのシンプルさ優先**: 本プロジェクトは学習用であり、稀にしか発生しない例外への防御的プログラミングよりもシンプルさを優先
+4. **Chainlitの仕組みを信頼**: Chainlitがセッション管理を適切に行っている
+
+削除したコード例:
+```python
+# 削除前
+messages = cl.user_session.get("messages")
+if messages is None:
+    await cl.ErrorMessage(content="Session not initialized. Please reload the page.").send()
+    return
+
+# 削除後
+messages = cl.user_session.get("messages")
+```
+
+**本番運用コードの場合**: 防御的プログラミングとしてこのチェックを残すことも検討に値する。ただし、学習用コードではシンプルさを優先する。
+
+### LangGraphレスポンス検証について（2025-10-31 更新）
+
+当初、`app_langgraph_sync.py`に以下のレスポンス検証コードを実装していました:
+
+```python
+response = await agent.ainvoke({"messages": messages})
+
+if not response or "messages" not in response or not response["messages"]:
+    await cl.ErrorMessage(
+        content="Failed to get response from the model. Please try again."
+    ).send()
+    return
+```
+
+しかし、LangGraphのソースコード調査により、このコードが不要であることが判明したため削除しました。
+
+**調査結果:**
+
+1. **LangGraphの`ainvoke()`の動作:**
+   - `MessagesState`を使用している場合、常に`{"messages": [...]}`の構造を返す
+   - 理論上は`None`を返す可能性もあるが、現在のグラフ実装では発生しない
+   - ノードが無効な値を返しても、LangGraphは「更新なし」として前の状態を返す
+
+2. **エラー時の動作:**
+   - `model.ainvoke()`が例外を投げた場合 → 外側の`try-except`でキャッチされる
+   - レスポンス構造が無効になるケースは実際には発生しない
+
+3. **MessagesStateの保証:**
+   - `MessagesState`は型システムにより`"messages"`キーの存在を保証
+   - LangGraphは構造検証を行わないが、状態マージの仕組みにより構造は維持される
+
+**決定: レスポンス検証コードを削除**
+
+理由:
+1. **実際には発生しない**: 現在のグラフ実装では、レスポンス構造は常に有効
+2. **学習者を混乱させる**: LangGraphが無効な構造を返すと誤解させる可能性
+3. **外側のtry-exceptで十分**: 実際のエラー（モデル失敗、ネットワークエラーなど）は既にキャッチされている
+4. **テスト不可能**: この検証が役立つ状況を実際に再現できない
+5. **コードのシンプルさ優先**: 学習用コードでは本質的なエラーハンドリングに集中すべき
+
+削除後のコード:
+```python
+response = await agent.ainvoke({"messages": messages})
+last_message = response["messages"][-1].content
+```
+
+**参考:**
+- LangGraphソースコード調査: `langgraph/pregel/main.py` の`ainvoke()`実装
+- `MessagesState`定義: `langgraph/graph/message.py`
+- エラーコード定義: `langgraph/errors.py` (INVALID_GRAPH_NODE_RETURN_VALUEは定義されているが使用されていない)
+
 ---
 
 ## 次に決めるべきこと
