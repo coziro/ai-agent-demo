@@ -16,10 +16,6 @@ async def on_chat_start():
 async def on_message(message: cl.Message):
     try:
         messages = cl.user_session.get("messages")
-        if messages is None:
-            await cl.ErrorMessage(content="Session not initialized. Please reload the page.").send()
-            return
-
         human_msg = HumanMessage(message.content)
         messages.append(human_msg)
 

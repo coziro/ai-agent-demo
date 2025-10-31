@@ -1110,6 +1110,37 @@ async def on_message(message: cl.Message):
 - OpenAI例外定義: `openai/_exceptions.py`
 - Anthropic例外定義: `anthropic/_exceptions.py`
 
+### セッション検証について（2025-10-31 更新）
+
+当初、`messages is None`のチェックを実装したが、実際のテストで以下が判明:
+
+**テスト結果:**
+- Chainlitはページリロード時に自動的に`@cl.on_chat_start`を再実行する
+- サーバー再起動後もエラーが発生しない（Chainlitが自動的にセッションを再確立）
+- 実運用で`messages is None`は極めて発生しにくい
+
+**決定: セッション検証コードを削除**
+
+理由:
+1. **実際には発生しない**: ユーザーテストで、リロード・サーバー再起動いずれでもエラーが発生しないことを確認
+2. **学習用コードの目的**: 本質的なエラーハンドリング（API呼び出しエラー）を学ぶことが目的
+3. **コードのシンプルさ優先**: 本プロジェクトは学習用であり、稀にしか発生しない例外への防御的プログラミングよりもシンプルさを優先
+4. **Chainlitの仕組みを信頼**: Chainlitがセッション管理を適切に行っている
+
+削除したコード例:
+```python
+# 削除前
+messages = cl.user_session.get("messages")
+if messages is None:
+    await cl.ErrorMessage(content="Session not initialized. Please reload the page.").send()
+    return
+
+# 削除後
+messages = cl.user_session.get("messages")
+```
+
+**本番運用コードの場合**: 防御的プログラミングとしてこのチェックを残すことも検討に値する。ただし、学習用コードではシンプルさを優先する。
+
 ---
 
 ## 次に決めるべきこと
