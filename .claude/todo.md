@@ -87,24 +87,17 @@
 
 ### アーキテクチャ・構成
 
-- [ ] docker-compose.ymlの更新（app.pyから新ファイル名への変更）
-  - 目的: docker-compose upで起動するアプリを明確にする
-  - 現状の問題: docker-compose.ymlが`app.py`を参照しているが、このファイルは存在しない
-  - 検討事項:
-    - どの実装をデフォルトにするか（app_langchain_streaming.py推奨）
-    - または環境変数で選択可能にする
-  - 影響範囲: [docker-compose.yml](../docker-compose.yml)
-  - 見積もり: 30分
-  - メモ: ファイル整理後に対応（別タスク）
-
-- [x] ディレクトリ構成の見直し
-  - 目的: 複数の実装例を整理された形で提供
+- [x] ディレクトリ構成の見直し + docker-compose.yml更新
+  - 目的: 複数の実装例を整理された形で提供、docker-composeで起動するアプリを選択可能にする
   - 完了内容:
     - `apps/` ディレクトリを作成し、全ての実装ファイルを移動
     - ファイル名から `app_` プレフィックスを削除（`langchain_sync.py` など）
     - `main.py` を削除（不要と判断）
     - `apps/README.md` を作成（4つの実装の比較説明）
-    - README.md、CLAUDE.md を更新（起動コマンド、プロジェクト構造）
+    - docker-compose.yml を更新（環境変数 `CHAINLIT_APP` で起動アプリを選択可能に）
+    - .env.example に `CHAINLIT_APP` の設定を追加（デフォルト: `apps/langchain_streaming.py`）
+    - README.md を更新（起動コマンド、プロジェクト構造、docker-composeの使い方）
+    - CLAUDE.md を更新（起動コマンド、プロジェクト構造）
   - 影響範囲: プロジェクト全体
   - Pull Request: #8（feature/restructure-directory）
   - 実施日: 2025-11-01

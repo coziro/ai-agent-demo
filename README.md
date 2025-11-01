@@ -27,11 +27,17 @@ To run the application:
    cd ai-agent-demo
    ```
 
-2. **Set up your API key**
+2. **Set up your environment**
    ```bash
    cp .env.example .env
    ```
-   Edit `.env` and add your OpenAI API key (get it from https://platform.openai.com/api-keys)
+   Edit `.env` and configure:
+   - **OPENAI_API_KEY**: Your OpenAI API key (get it from https://platform.openai.com/api-keys)
+   - **CHAINLIT_APP** (optional): Which app to run (default: `apps/langchain_streaming.py`)
+     - `apps/langchain_sync.py` - LangChain + Sync
+     - `apps/langchain_streaming.py` - LangChain + Streaming (recommended)
+     - `apps/langgraph_sync.py` - LangGraph + Sync
+     - `apps/langgraph_streaming.py` - LangGraph + Streaming
 
 3. **Run with Docker Compose**
    ```bash
@@ -40,6 +46,10 @@ To run the application:
 
 4. **Open your browser**
    - Visit http://localhost:8000
+
+**To switch apps:**
+- Edit `CHAINLIT_APP` in `.env` and restart: `docker-compose down && docker-compose up`
+- Or use environment variable: `CHAINLIT_APP=apps/langgraph_sync.py docker-compose up`
 
 To stop the application, press `Ctrl+C` or run `docker-compose down`.
 
