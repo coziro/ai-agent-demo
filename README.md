@@ -1,6 +1,6 @@
 # AI Agent Demo
 
-A conversational AI chatbot built with Chainlit and LangChain.
+LangChain/LangGraph implementation examples with Chainlit UI.
 
 ## Tech Stack
 
@@ -92,37 +92,17 @@ For developers who want to modify the code:
 
 4. **Run the Application**
 
-   This project provides multiple implementations to demonstrate different patterns:
+   This project provides 4 different implementations (LangChain/LangGraph × Sync/Streaming).
 
-   **Implementation Matrix:**
-
-   |              | LangChain                   | LangGraph                  |
-   |--------------|-----------------------------| ---------------------------|
-   | **Sync**     | `langchain_sync.py`         | `langgraph_sync.py`        |
-   | **Streaming**| `langchain_streaming.py`    | `langgraph_streaming.py`   |
-
-   **Terminology:**
-   - **Sync**: Displays the complete response at once (uses `ainvoke()`)
-   - **Streaming**: Displays tokens progressively in real-time (uses `astream()`)
-
-   Note: Both versions use async/await for non-blocking I/O operations.
-
-   **Examples:**
+   **Quick start:**
    ```bash
-   # LangChain + Sync (simple, complete response at once)
-   uv run chainlit run apps/langchain_sync.py
-
-   # LangChain + Streaming (real-time token display)
+   # Run the recommended implementation (LangChain + Streaming)
    uv run chainlit run apps/langchain_streaming.py
-
-   # LangGraph + Sync (graph-based agent)
-   uv run chainlit run apps/langgraph_sync.py
-
-   # LangGraph + Streaming (graph-based agent with real-time token display)
-   uv run chainlit run apps/langgraph_streaming.py
    ```
 
    The application will be available at: http://localhost:8000
+
+   **For details on all implementations**, see [apps/README.md](apps/README.md)
 
 ## Project Structure
 
@@ -169,17 +149,8 @@ uv sync
 # 2. Run:
 uv sync
 
-# Run the app (LangChain + Sync)
-uv run chainlit run apps/langchain_sync.py
-
-# Run the app (LangChain + Streaming)
+# Run an app (see apps/README.md for all options)
 uv run chainlit run apps/langchain_streaming.py
-
-# Run the app (LangGraph + Sync)
-uv run chainlit run apps/langgraph_sync.py
-
-# Run the app (LangGraph + Streaming)
-uv run chainlit run apps/langgraph_streaming.py
 
 # Run with auto-reload (development mode)
 uv run chainlit run apps/langchain_streaming.py -w
