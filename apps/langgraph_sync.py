@@ -48,17 +48,18 @@ async def on_chat_start() -> None:
 
 
 @cl.on_message
-async def on_message(request_message: cl.Message) -> None:
+async def on_message(user_request: cl.Message) -> None:
     try:
         chat_history = load_chat_history()
-        chat_history.append(HumanMessage(request_message.content))
+        chat_history.append(HumanMessage(user_request.content))
 
-        agent_response = await agent.ainvoke({"messages": chat_history})
-        last_message: AIMessage = agent_response["messages"][-1]
+        current_state = ChatState(messages=chat_history)
+        updated_state = await agent.ainvoke(current_state)
+        last_message: AIMessage = updated_state["messages"][-1]
         chat_history.append(last_message)
 
-        reply_message = cl.Message(content=last_message.content)
-        await reply_message.send()
+        user_response = cl.Message(content=last_message.content)
+        await user_response.send()
 
     except Exception as e:
         await cl.ErrorMessage(content=repr(e)).send()
