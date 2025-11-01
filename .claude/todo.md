@@ -192,7 +192,10 @@
 
 - [ ] Loggingの仕組み導入
   - 目的: デバッグ・運用時のトラブルシューティング
-  - 検討項目: loguru vs 標準logging
+  - 検討項目:
+    1. loguru
+    2. 標準logging
+    3. Chainlit既定の `cl.logger`
   - 影響範囲: [app_langchain_sync.py](../app_langchain_sync.py), [app_langchain_streaming.py](../app_langchain_streaming.py), [app_langgraph_sync.py](../app_langgraph_sync.py)、設定ファイル
   - 見積もり: 1時間
 
