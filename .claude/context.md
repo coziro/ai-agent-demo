@@ -61,6 +61,56 @@
 
 ## 最近完了したタスク
 
+### ディレクトリ構成の見直し + docker-compose.yml更新 - 2025-11-01
+
+**完了内容:**
+- `apps/` ディレクトリを作成し、全ての実装ファイルを移動（git履歴保持）
+- ファイル名から `app_` プレフィックスを削除（apps/配下なので冗長）
+- docker-compose.yml を環境変数 `CHAINLIT_APP` で起動アプリを選択可能に更新
+- .env.example に CHAINLIT_APP 設定を追加（4つの選択肢を記載）
+- README.md の改善:
+  - プロジェクト説明を "LangChain/LangGraph implementation examples with Chainlit UI" に変更
+  - Quick Start セクションに docker-compose 使用方法を追加
+  - Development Setup セクションを簡素化、apps/README.md への参照を追加
+- apps/README.md を新規作成（実装パターンの比較、起動方法を記載）
+- main.py を削除（不要になったため）
+
+**移動したファイル:**
+- `app_langchain_sync.py` → `apps/langchain_sync.py`
+- `app_langchain_streaming.py` → `apps/langchain_streaming.py`
+- `app_langgraph_sync.py` → `apps/langgraph_sync.py`
+- `app_langgraph_streaming.py` → `apps/langgraph_streaming.py`
+
+**docker-compose.yml の変更:**
+```yaml
+command: uv run chainlit run ${CHAINLIT_APP:-apps/langchain_streaming.py} --host 0.0.0.0
+```
+
+**設計判断:**
+- ディレクトリ名: `apps/` (実装は単なる例ではなく実際に動作するアプリケーション)
+- ファイル命名: `app_` プレフィックスを削除（ディレクトリ名で既に明確）
+- 環境変数のデフォルト値: `apps/langchain_streaming.py` (フルパスで明確に)
+- シンプルさ優先: 階層は浅く、READMEは最小限に
+
+**技術的な学び:**
+- `git mv` でファイル履歴を保持しながらリネーム・移動が可能
+- docker-compose の `${VAR:-default}` 構文でデフォルト値を設定
+- .env ファイルで環境変数を管理し、docker-compose.yml は変更不要に
+- ユーザー向けドキュメントは「シングルソースの原則」で冗長性を排除
+
+**成果物:**
+- [apps/](../apps/) ディレクトリ（4つの実装ファイル + README.md）
+- [docker-compose.yml](../docker-compose.yml) - 環境変数対応
+- [.env.example](../.env.example) - CHAINLIT_APP 設定追加
+- [README.md](../README.md) - 説明改善、docker-compose 使用方法追加
+- [CLAUDE.md](../CLAUDE.md) - ファイルパス更新
+- Pull Request #8（マージ済み）
+
+**今後のタスク:**
+- 共通コードの分離（src/ ディレクトリの検討）- todo.md に記載済み
+
+---
+
 ### LangGraphストリーミング版の実装（Phase 2a） - 2025-10-31
 
 **完了内容:**

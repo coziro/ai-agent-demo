@@ -1322,6 +1322,134 @@ last_message = response["messages"][-1].content
 - `MessagesState`定義: `langgraph/graph/message.py`
 - エラーコード定義: `langgraph/errors.py` (INVALID_GRAPH_NODE_RETURN_VALUEは定義されているが使用されていない)
 
+### ディレクトリ構成の決定 (apps/ ディレクトリ) - 2025-11-01
+
+**状況・課題:**
+- プロジェクトに4つの実装ファイル（LangChain/LangGraph × sync/streaming）が存在
+- ルートディレクトリに `app_*.py` が散在し、プロジェクト構造が不明瞭
+- docker-compose.yml が古い `app.py` を参照していた（既に存在しないファイル）
+- ユーザーが簡単にアプリを切り替えられる仕組みが必要
+
+**検討した選択肢:**
+
+1. **Proposal A: examples/ + 深い階層**
+   ```
+   examples/
+   ├── langchain/
+   │   ├── sync.py
+   │   └── streaming.py
+   ├── langgraph/
+   │   ├── sync.py
+   │   └── streaming.py
+   └── README.md
+   ```
+   - ❌ 階層が深い
+   - ❌ ファイル名だけではフレームワークが不明
+
+2. **Proposal B: examples/ + フラット構造**
+   ```
+   examples/
+   ├── langchain_sync.py
+   ├── langchain_streaming.py
+   ├── langgraph_sync.py
+   ├── langgraph_streaming.py
+   └── README.md
+   ```
+   - ✅ シンプル
+   - ✅ ファイル名から実装パターンが一目瞭然
+   - ⚠️ "examples" というディレクトリ名が実態に合わない（実際に動作するアプリ）
+
+3. **Proposal C: src/ ベースのモジュラー構造**
+   ```
+   src/
+   ├── apps/
+   ├── core/
+   └── utils/
+   ```
+   - ✅ 将来の拡張性が高い
+   - ❌ 現時点では過剰（YAGNI原則）
+
+4. **Proposal D: チュートリアル型**
+   ```
+   tutorials/
+   ├── 01_langchain_basic.py
+   ├── 02_langchain_streaming.py
+   ...
+   ```
+   - ❌ 実装は学習教材ではなく、実用的なアプリケーション
+
+**決定内容:**
+
+**Proposal B をベースに、ディレクトリ名を `apps/` に変更**
+
+最終的な構造:
+```
+apps/
+├── langchain_sync.py
+├── langchain_streaming.py
+├── langgraph_sync.py
+├── langgraph_streaming.py
+└── README.md
+```
+
+ファイル移動時に `app_` プレフィックスを削除:
+- `app_langchain_sync.py` → `apps/langchain_sync.py`
+- `app_langchain_streaming.py` → `apps/langchain_streaming.py`
+- `app_langgraph_sync.py` → `apps/langgraph_sync.py`
+- `app_langgraph_streaming.py` → `apps/langgraph_streaming.py`
+
+**理由:**
+
+1. **ディレクトリ名を `apps/` にした理由:**
+   - これらのファイルは単なる例ではなく、実際に動作するアプリケーション
+   - ユーザーが `docker-compose up` で直接実行する実用的なコード
+   - `examples/` だと "参考例" という印象が強く、実態に合わない
+
+2. **フラット構造を選んだ理由:**
+   - ファイル数が少ない（4ファイル + README.md）
+   - ファイル名から実装パターンが一目瞭然（`{framework}_{mode}.py`）
+   - 階層を深くするメリットがない（YAGNI原則）
+   - README.mdの数を最小限に（1つだけ）
+
+3. **`app_` プレフィックスを削除した理由:**
+   - `apps/app_langchain_sync.py` は冗長（"app" が重複）
+   - ディレクトリ名で既にアプリケーションであることが明確
+   - `apps/langchain_sync.py` の方が読みやすい
+
+4. **共通コードの分離は後回し:**
+   - 現時点では4つのファイルは独立している（共通化する必然性が低い）
+   - 将来的に共通コードが増えた場合は `src/` ディレクトリを検討
+   - todo.mdに「共通コードの分離」タスクを記録済み
+
+**docker-compose.yml の更新:**
+
+環境変数 `CHAINLIT_APP` でアプリを選択可能に:
+
+```yaml
+command: uv run chainlit run ${CHAINLIT_APP:-apps/langchain_streaming.py} --host 0.0.0.0
+```
+
+**環境変数のデフォルト値を相対パスにした理由:**
+- ファイル名だけ（`langchain_streaming.py`）だと、ファイルの場所が不明瞭
+- フルパス（`apps/langchain_streaming.py`）の方が初めて見る人にとって分かりやすい
+- docker-compose.yml のコマンドと .env の設定が対応しやすい
+
+**影響範囲:**
+- [apps/](../apps/) ディレクトリ作成
+- [apps/README.md](../apps/README.md) - 実装パターンの比較表
+- [docker-compose.yml](../docker-compose.yml) - 環境変数対応
+- [.env.example](../.env.example) - CHAINLIT_APP 設定追加
+- [README.md](../README.md) - Quick Start、Development Setup 更新
+- [CLAUDE.md](../CLAUDE.md) - ファイルパス更新
+
+**参考:**
+- ユーザーフィードバック: "Simple is best", "階層を深くしない", "README を増やさない"
+- Git 履歴保持: `git mv` を使用してファイル履歴を維持
+
+**今後の展開:**
+- 共通コードが増えたら `src/` ディレクトリを検討（todo.md記載済み）
+- アプリ数が増えても、フラット構造を維持する方針（最大10ファイル程度まで）
+
 ---
 
 ## 次に決めるべきこと
