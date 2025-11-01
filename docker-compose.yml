@@ -11,5 +11,5 @@ services:
       - .:/workspaces/ai-agent-demo
     env_file:
       - .env
-    command: uv run chainlit run app.py --host 0.0.0.0
+    command: uv run chainlit run ${CHAINLIT_APP:-apps/langchain_streaming.py} --host 0.0.0.0
     working_dir: /workspaces/ai-agent-demo

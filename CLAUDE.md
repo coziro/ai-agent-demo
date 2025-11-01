@@ -18,22 +18,21 @@ Dependencies are defined in [pyproject.toml](pyproject.toml) and locked in `uv.l
 
 ## Running Code
 
-- **Run main script**: `uv run python main.py`
 - **Run Chainlit apps**: This project provides multiple implementations:
-  - `uv run chainlit run app_langchain_sync.py` - LangChain + Sync (complete response at once)
-  - `uv run chainlit run app_langchain_streaming.py` - LangChain + Streaming (real-time token display)
-  - `uv run chainlit run app_langgraph_sync.py` - LangGraph + Sync (graph-based agent)
-  - `uv run chainlit run app_langgraph_streaming.py` - LangGraph + Streaming (graph-based + real-time)
+  - `uv run chainlit run apps/langchain_sync.py` - LangChain + Sync (complete response at once)
+  - `uv run chainlit run apps/langchain_streaming.py` - LangChain + Streaming (real-time token display)
+  - `uv run chainlit run apps/langgraph_sync.py` - LangGraph + Sync (graph-based agent)
+  - `uv run chainlit run apps/langgraph_streaming.py` - LangGraph + Streaming (graph-based + real-time)
 - **Run Jupyter notebooks**: Open `.ipynb` files in [notebooks/](notebooks/) directory using VS Code's Jupyter extension
 
 ### Implementation Matrix
 
 This project demonstrates different implementation patterns:
 
-|              | LangChain                     | LangGraph                    |
-|--------------|-------------------------------|------------------------------|
-| **Sync**     | `app_langchain_sync.py`       | `app_langgraph_sync.py`      |
-| **Streaming**| `app_langchain_streaming.py`  | `app_langgraph_streaming.py` |
+|              | LangChain                   | LangGraph                  |
+|--------------|-----------------------------|----------------------------|
+| **Sync**     | `langchain_sync.py`         | `langgraph_sync.py`        |
+| **Streaming**| `langchain_streaming.py`    | `langgraph_streaming.py`   |
 
 **Terminology:**
 - **Sync**: Displays the complete response at once (uses `ainvoke()`)
@@ -59,12 +58,12 @@ See [.claude/decisions.md](.claude/decisions.md) for the rationale behind this n
 
 - **DevContainer configuration**: [.devcontainer/](.devcontainer/) - Contains Dockerfile and devcontainer.json for containerized development
 - **Notebooks**: [notebooks/](notebooks/) - Jupyter notebooks for experimentation and demos
-- **Main entry point**: [main.py](main.py) - Simple Python script entry point
-- **Chainlit apps**: Multiple implementations demonstrating different patterns
-  - [app_langchain_sync.py](app_langchain_sync.py) - LangChain + Sync
-  - [app_langchain_streaming.py](app_langchain_streaming.py) - LangChain + Streaming
-  - [app_langgraph_sync.py](app_langgraph_sync.py) - LangGraph + Sync
-  - [app_langgraph_streaming.py](app_langgraph_streaming.py) - LangGraph + Streaming
+- **Application implementations**: [apps/](apps/) - Multiple Chainlit app implementations demonstrating different patterns
+  - [apps/langchain_sync.py](apps/langchain_sync.py) - LangChain + Sync
+  - [apps/langchain_streaming.py](apps/langchain_streaming.py) - LangChain + Streaming
+  - [apps/langgraph_sync.py](apps/langgraph_sync.py) - LangGraph + Sync
+  - [apps/langgraph_streaming.py](apps/langgraph_streaming.py) - LangGraph + Streaming
+  - [apps/README.md](apps/README.md) - Detailed comparison of implementations
 - **Chainlit configuration**: [.chainlit/](.chainlit/) - Chainlit settings and translations
 - **Claude Code context**: [.claude/](.claude/) - Project context, decisions, and session notes for Claude Code
 
@@ -72,7 +71,7 @@ See [.claude/decisions.md](.claude/decisions.md) for the rationale behind this n
 
 This project includes a Chainlit-based conversational AI application:
 
-- **Main application**: [app.py](app.py) - Currently a simple echo bot that uses the `@cl.on_message` decorator
+- **Application implementations**: [apps/](apps/) - Multiple implementations demonstrating different patterns (see Implementation Matrix above)
 - **Configuration**: [.chainlit/config.toml](.chainlit/config.toml) - UI settings, feature flags, and session management
 - **Welcome screen**: [chainlit.md](chainlit.md) - Markdown content shown when users first open the app
 - **Translations**: Only Japanese (`ja.json`) and English (`en-US.json`) are maintained; other languages were removed but can be restored from git history if needed

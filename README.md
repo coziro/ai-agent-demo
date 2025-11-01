@@ -1,6 +1,6 @@
 # AI Agent Demo
 
-A conversational AI chatbot built with Chainlit and LangChain.
+LangChain/LangGraph implementation examples with Chainlit UI.
 
 ## Tech Stack
 
@@ -27,11 +27,17 @@ To run the application:
    cd ai-agent-demo
    ```
 
-2. **Set up your API key**
+2. **Set up your environment**
    ```bash
    cp .env.example .env
    ```
-   Edit `.env` and add your OpenAI API key (get it from https://platform.openai.com/api-keys)
+   Edit `.env` and configure:
+   - **OPENAI_API_KEY**: Your OpenAI API key (get it from https://platform.openai.com/api-keys)
+   - **CHAINLIT_APP** (optional): Which app to run (default: `apps/langchain_streaming.py`)
+     - `apps/langchain_sync.py` - LangChain + Sync
+     - `apps/langchain_streaming.py` - LangChain + Streaming (recommended)
+     - `apps/langgraph_sync.py` - LangGraph + Sync
+     - `apps/langgraph_streaming.py` - LangGraph + Streaming
 
 3. **Run with Docker Compose**
    ```bash
@@ -40,6 +46,10 @@ To run the application:
 
 4. **Open your browser**
    - Visit http://localhost:8000
+
+**To switch apps:**
+- Edit `CHAINLIT_APP` in `.env` and restart: `docker-compose down && docker-compose up`
+- Or use environment variable: `CHAINLIT_APP=apps/langgraph_sync.py docker-compose up`
 
 To stop the application, press `Ctrl+C` or run `docker-compose down`.
 
@@ -82,37 +92,17 @@ For developers who want to modify the code:
 
 4. **Run the Application**
 
-   This project provides multiple implementations to demonstrate different patterns:
+   This project provides 4 different implementations (LangChain/LangGraph × Sync/Streaming).
 
-   **Implementation Matrix:**
-
-   |              | LangChain                     | LangGraph                    |
-   |--------------|-------------------------------|------------------------------|
-   | **Sync**     | `app_langchain_sync.py`       | `app_langgraph_sync.py`      |
-   | **Streaming**| `app_langchain_streaming.py`  | `app_langgraph_streaming.py` |
-
-   **Terminology:**
-   - **Sync**: Displays the complete response at once (uses `ainvoke()`)
-   - **Streaming**: Displays tokens progressively in real-time (uses `astream()`)
-
-   Note: Both versions use async/await for non-blocking I/O operations.
-
-   **Examples:**
+   **Quick start:**
    ```bash
-   # LangChain + Sync (simple, complete response at once)
-   uv run chainlit run app_langchain_sync.py
-
-   # LangChain + Streaming (real-time token display)
-   uv run chainlit run app_langchain_streaming.py
-
-   # LangGraph + Sync (graph-based agent)
-   uv run chainlit run app_langgraph_sync.py
-
-   # LangGraph + Streaming (graph-based agent with real-time token display)
-   uv run chainlit run app_langgraph_streaming.py
+   # Run the recommended implementation (LangChain + Streaming)
+   uv run chainlit run apps/langchain_streaming.py
    ```
 
    The application will be available at: http://localhost:8000
+
+   **For details on all implementations**, see [apps/README.md](apps/README.md)
 
 ## Project Structure
 
@@ -129,11 +119,13 @@ ai-agent-demo/
 │   ├── decisions.md        # Design decisions
 │   ├── todo.md             # Task management
 │   └── references.md       # Reference links and documentation
+├── apps/                   # Application implementations
+│   ├── langchain_sync.py        # LangChain + Sync (complete response)
+│   ├── langchain_streaming.py   # LangChain + Streaming (real-time)
+│   ├── langgraph_sync.py        # LangGraph + Sync (graph-based agent)
+│   ├── langgraph_streaming.py   # LangGraph + Streaming (graph-based + real-time)
+│   └── README.md                # Detailed comparison of implementations
 ├── notebooks/              # Jupyter notebooks for experimentation
-├── app_langchain_sync.py        # LangChain + Sync (complete response)
-├── app_langchain_streaming.py   # LangChain + Streaming (real-time)
-├── app_langgraph_sync.py        # LangGraph + Sync (graph-based agent)
-├── app_langgraph_streaming.py   # LangGraph + Streaming (graph-based + real-time)
 ├── chainlit.md             # Chainlit welcome screen
 ├── docker-compose.yml      # Docker Compose configuration
 ├── pyproject.toml          # Python dependencies
@@ -157,20 +149,11 @@ uv sync
 # 2. Run:
 uv sync
 
-# Run the app (LangChain + Sync)
-uv run chainlit run app_langchain_sync.py
-
-# Run the app (LangChain + Streaming)
-uv run chainlit run app_langchain_streaming.py
-
-# Run the app (LangGraph + Sync)
-uv run chainlit run app_langgraph_sync.py
-
-# Run the app (LangGraph + Streaming)
-uv run chainlit run app_langgraph_streaming.py
+# Run an app (see apps/README.md for all options)
+uv run chainlit run apps/langchain_streaming.py
 
 # Run with auto-reload (development mode)
-uv run chainlit run app_langchain_streaming.py -w
+uv run chainlit run apps/langchain_streaming.py -w
 ```
 
 ### Jupyter Notebooks
