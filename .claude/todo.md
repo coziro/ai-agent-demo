@@ -39,6 +39,31 @@
 - 様々な実装パターン（同期/ストリーミング、LangChain/LangGraph）を網羅的に示す
 - 学習者が参考にできるベストプラクティスを提供
 
+### コード品質・可読性向上
+
+- [ ] `langgraph_sync.py`のリファクタリング（可読性向上）
+  - 目的: コードの可読性と保守性を向上させ、将来の拡張に備える
+  - 実装内容:
+    1. **明示的な型指定**: `ChatState`を明示的に構築
+       - Before: `agent_response = await agent.ainvoke({"messages": chat_history})`
+       - After: `agent_request = ChatState(messages=chat_history)` + `agent_response = await agent.ainvoke(agent_request)`
+    2. **マジックストリング対策（ノード名）**: ノード名を定数化
+       - `NODE_CALL_LLM = "call_llm"` を定義し、`add_node()`等で使用
+    3. **StateFieldの管理**: `"messages"`フィールド名の定数化
+       - 将来フィールドが増える前提で拡張性のある設計を検討
+       - オプションA: シンプルな定数（`MESSAGES_FIELD = "messages"`）
+       - オプションB: Enumで管理（`StateField.MESSAGES`）+ 整合性チェック
+    4. **import文の整理**: 不要な`AnyMessage`を削除、import順序の標準化
+    5. **変数名の改善**: 部分更新の意図を明確にする
+       - `call_llm()`関数内で`state_update = {"messages": [ai_response]}`
+    6. **ドキュメント追加**: `call_llm()`関数にdocstringを追加
+  - 設計判断が必要な項目:
+    - StateFieldの管理方法（定数 vs Enum）
+    - マジックストリング対策の適用範囲（ノード名のみ vs フィールド名も）
+  - 影響範囲: [apps/langgraph_sync.py](../apps/langgraph_sync.py)（将来的に他の3ファイルにも適用可能）
+  - 見積もり: 1-2時間
+  - メモ: 2025-11-01の議論を反映。まずは`langgraph_sync.py`で試して、効果を確認してから他ファイルへの適用を判断
+
 ### 品質向上・開発環境改善
 
 - [ ] Static type check (型チェック) の導入
