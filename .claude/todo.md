@@ -85,23 +85,6 @@
     - 暫定回避策が不要になる
     - メンテナンス負担が減る
 
-### アーキテクチャ・構成
-
-- [x] ディレクトリ構成の見直し + docker-compose.yml更新
-  - 目的: 複数の実装例を整理された形で提供、docker-composeで起動するアプリを選択可能にする
-  - 完了内容:
-    - `apps/` ディレクトリを作成し、全ての実装ファイルを移動
-    - ファイル名から `app_` プレフィックスを削除（`langchain_sync.py` など）
-    - `main.py` を削除（不要と判断）
-    - `apps/README.md` を作成（4つの実装の比較説明）
-    - docker-compose.yml を更新（環境変数 `CHAINLIT_APP` で起動アプリを選択可能に）
-    - .env.example に `CHAINLIT_APP` の設定を追加（デフォルト: `apps/langchain_streaming.py`）
-    - README.md を更新（起動コマンド、プロジェクト構造、docker-composeの使い方）
-    - CLAUDE.md を更新（起動コマンド、プロジェクト構造）
-  - 影響範囲: プロジェクト全体
-  - Pull Request: #8（feature/restructure-directory）
-  - 実施日: 2025-11-01
-
 ### 機能拡張
 
 - [ ] LangSmithの導入
@@ -297,6 +280,25 @@
 ## 完了 (Completed)
 
 ### 2025-11-01
+
+- [x] ディレクトリ構成の見直し + docker-compose.yml更新
+  - 目的: 複数の実装例を整理された形で提供、docker-composeで起動するアプリを選択可能にする
+  - 完了内容:
+    - `apps/` ディレクトリを作成し、全ての実装ファイルを移動（git履歴保持）
+    - ファイル名から `app_` プレフィックスを削除（`langchain_sync.py` など）
+    - `main.py` を削除（不要と判断）
+    - `apps/README.md` を作成（4つの実装の比較説明）
+    - docker-compose.yml を更新（環境変数 `CHAINLIT_APP` で起動アプリを選択可能に）
+    - .env.example に `CHAINLIT_APP` の設定を追加（デフォルト: `apps/langchain_streaming.py`）
+    - README.md を更新（プロジェクト説明、docker-compose使用方法、簡素化）
+    - CLAUDE.md を更新（起動コマンド、プロジェクト構造）
+  - 設計判断:
+    - ディレクトリ名: `apps/` (実装は単なる例ではなく実際に動作するアプリ)
+    - フラット構造を選択（階層は浅く、README最小限）
+    - 環境変数のパス: フルパス `apps/langchain_streaming.py` (明確性優先)
+  - 影響範囲: プロジェクト全体
+  - Pull Request: #8（feature/restructure-directory）
+  - 学び: `git mv`でファイル履歴保持、docker-compose環境変数、シングルソースの原則
 
 - [x] 既存実装のリファクタリング（コード品質向上）
   - 目的: 無駄な処理の削除、型ヒントの追加、変数名の整理
