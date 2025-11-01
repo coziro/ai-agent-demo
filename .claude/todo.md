@@ -85,36 +85,6 @@
     - 暫定回避策が不要になる
     - メンテナンス負担が減る
 
-### コード品質・信頼性の向上
-
-- [x] 既存実装のリファクタリング（コード品質向上） - 2025-11-01
-  - 目的: 無駄な処理の削除、型ヒントの追加、変数名の整理
-  - 対象ファイル:
-    - [app_langchain_sync.py](../app_langchain_sync.py)
-    - [app_langchain_streaming.py](../app_langchain_streaming.py)
-    - [app_langgraph_sync.py](../app_langgraph_sync.py)
-    - [app_langgraph_streaming.py](../app_langgraph_streaming.py)（実装後）
-  - 具体的な改善項目:
-    1. **無駄な処理の削除**:
-       - `AIMessage(last_message.content)` の再作成を削除（LangGraph版）
-       - `response["messages"]` をそのまま使う（LangGraphが管理した履歴を活用）
-    2. **型ヒントの追加**:
-       - 関数の引数・返り値に型ヒントを追加
-       - 変数にも適切な型アノテーションを追加
-       - 例: `messages: list[BaseMessage]`, `response: dict[str, Any]`
-    3. **変数名の整理**:
-       - 似たような変数名（`response`, `msg`, `message`, `messages`など）を整理
-       - より明確で区別しやすい名前に変更
-  - 見積もり: 2-3時間
-  - 依存: Phase 2a（LangGraphストリーミング実装）の完了
-  - メモ: 型チェック導入前に実施すると効果的
-  - 影響範囲: 4つの実装ファイル全て
-  - 完了内容:
-    - `load_chat_history()` の共通化とセッションキー統一
-    - LangGraph版に `ChatState` を導入し `agent.ainvoke` のレスポンスを直接保存
-    - ストリーミング時は `Message.stream_token()` の蓄積をそのまま履歴に反映
-    - Pull Request #7（Refine Lang chat handlers）でマージ済み
-
 ### アーキテクチャ・構成
 
 - [ ] docker-compose.ymlの更新（app.pyから新ファイル名への変更）
@@ -319,6 +289,25 @@
 ---
 
 ## 完了 (Completed)
+
+### 2025-11-01
+
+- [x] 既存実装のリファクタリング（コード品質向上）
+  - 目的: 無駄な処理の削除、型ヒントの追加、変数名の整理
+  - 対象ファイル:
+    - [app_langchain_sync.py](../app_langchain_sync.py)
+    - [app_langchain_streaming.py](../app_langchain_streaming.py)
+    - [app_langgraph_sync.py](../app_langgraph_sync.py)
+    - [app_langgraph_streaming.py](../app_langgraph_streaming.py)
+  - 完了内容:
+    - `load_chat_history()` の共通化とセッションキー統一
+    - LangGraph版に `ChatState` を導入し `agent.ainvoke` のレスポンスを直接保存
+    - ストリーミング時は `Message.stream_token()` の蓄積をそのまま履歴に反映
+    - Pull Request #7（Refine Lang chat handlers）でマージ済み
+  - 学び:
+    - ChainlitのストリーミングAPI実装（`stream_token`）の内部動作を理解
+    - LangGraphのStateGraphにTypedDictを渡すと型補完が効きやすい
+    - LangGraphレスポンスを再ラップせず履歴へ統合すると二重生成を防げる
 
 ### 2025-10-31
 
