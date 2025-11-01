@@ -2,7 +2,7 @@
 
 このファイルには、プロジェクトに関連する重要なリンク、ドキュメント、参考資料を集約します。
 
-**最終更新:** 2025-10-30
+**最終更新:** 2025-11-01
 
 ---
 
@@ -309,52 +309,11 @@ uv run chainlit run app.py --port 8001
 
 ---
 
-## ツール・リソース
-
-### 開発ツール
-- **VS Code Extensions:**
-  - Python (ms-python.python)
-  - Jupyter (ms-toolsai.jupyter)
-  - Claude Code (anthropics.claude-code)
-
-### 便利なコマンド
-```bash
-# 依存関係の更新
-uv lock --upgrade
-
-# 仮想環境のアクティベート（必要な場合）
-source .venv/bin/activate
-
-# Jupyter Notebookサーバー起動
-jupyter notebook
-```
-
----
-
-## 関連記事・ブログ
-
-追加予定
-
----
-
 ## コミュニティ・サポート
 
 ### Chainlit
 - **Discord:** https://discord.gg/chainlit
 - **GitHub Issues:** https://github.com/Chainlit/chainlit/issues
-
----
-
-## カテゴリ別インデックス
-
-### 認証関連
-- まだ実装していません
-
-### データベース関連
-- まだ実装していません
-
-### デプロイ関連
-- まだ実装していません
 
 ---
 

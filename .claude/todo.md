@@ -2,7 +2,7 @@
 
 このファイルには、今後やるべきタスクを記録します。優先順位をつけて管理しましょう。
 
-**最終更新:** 2025-10-31（todo.md整理: LangGraph拡張タスクをアイデアセクションに移動）
+**最終更新:** 2025-11-01（優先度見直し: IME対応Phase分割、LangGraphチェックポイントを優先度高に移動）
 
 ---
 
@@ -41,14 +41,28 @@
 
 ### 品質向上・開発環境改善
 
-- [ ] 日本語IME入力対応（Enterキー問題の修正）
-  - 問題: 日本語変換確定のEnterでメッセージが送信されてしまう
-  - 目的: 日本語ユーザーの使いやすさ向上
-  - 実装: 2段階アプローチ
-    1. **暫定対応（Qiita回避策）**: すぐに使えるようにする
-    2. **根本解決（OSSコントリビューション）**: Chainlit本体を修正
+- [ ] Static type check (型チェック) の導入
+  - 目的: 型エラーを事前に検出し、コードの安全性を向上（特に複雑な実装前に導入推奨）
+  - 検討ツール:
+    - **mypy**: 最もポピュラーな型チェッカー、厳格なチェック
+    - **pyright**: Microsoft製、高速、VS Code統合が優れている
+    - **pytype**: Google製、型ヒント不要でも推論可能
+  - 実装内容:
+    1. ツール選定（mypyまたはpyright推奨）
+    2. `uv add --dev mypy` または `uv add --dev pyright`
+    3. pyproject.tomlに設定を追加
+    4. 既存コードに型ヒントを追加（段階的に）
+    5. DevContainerに型チェッカー拡張機能を追加（VS Code）
+  - 運用ルール案:
+    - コミット前に `uv run mypy .` または `uv run pyright` を実行
+    - Ruffと同様に手動実行（将来的にGitHub Actionsで自動化）
+  - 影響範囲: pyproject.toml、全てのPythonファイル、.devcontainer/devcontainer.json
+  - 見積もり: 1-2時間
+  - メモ: Ruffと組み合わせることで、コード品質が大幅に向上。複雑な実装（チェックポイント機構など）の前に導入すると効果的
 
-  **Phase 1: 暫定対応（優先）**
+- [ ] 日本語IME入力対応 Phase 1: 暫定対応（Qiita回避策）
+  - 問題: 日本語変換確定のEnterでメッセージが送信されてしまう
+  - 目的: 日本語ユーザーの使いやすさ向上（すぐに使えるようにする）
   - 解決策: `public/custom.js` を作成してIME状態を追跡
   - 手順:
     1. `public/custom.js` ファイルを作成
@@ -57,9 +71,38 @@
   - 参考: Qiita記事 https://qiita.com/bohemian916/items/4f3e860904c24922905a
   - 見積もり: 1-2時間
   - 影響範囲: public/custom.js（新規）、.chainlit/config.toml
+  - メモ: Phase 2（OSSコントリビューション）は優先度中に別タスクとして配置
 
-  **Phase 2: OSSコントリビューション（推奨）**
+### 機能拡張
+
+- [ ] LangGraphチェックポイント機構の検討・導入
+  - 目的: Chainlitセッションに依存せずに会話履歴を永続化し、LangGraph内で状態を復元できるようにする
+  - 背景:
+    - Chainlit依存度を下げ、他のUI（Streamlit、Jupyter Notebook、独自フロントエンド）への移行を容易にする
+    - ChainlitはあくまでUIの一つという位置付けにする
+    - 現在のメッセージ履歴管理をChainlitセッションから脱却させる
+  - 参考: LangGraphのcheckpointドキュメント、現在の[apps/langgraph_sync.py](../apps/langgraph_sync.py)実装
+  - 実装内容:
+    - チェックポイントストア（ローカルファイルまたはインメモリ）を設定
+    - `agent.ainvoke` 呼び出し時にcheckpointを活用する形へ変更
+    - Chainlitセッションとの役割分担を再検討し、どちらを正本にするか整理
+  - 影響範囲: LangGraphの2ファイルのみ（[apps/langgraph_sync.py](../apps/langgraph_sync.py), [apps/langgraph_streaming.py](../apps/langgraph_streaming.py)）
+  - 実装アプローチ（段階的）:
+    1. まず[apps/langgraph_sync.py](../apps/langgraph_sync.py)で試す（検証・動作確認）
+    2. 次に[apps/langgraph_streaming.py](../apps/langgraph_streaming.py)に適用
+    3. 共通コードの分離タスク（優先度中）と組み合わせて共通化を検討
+  - 見積もり: 2-3時間（Phase 1のみ）、追加2-3時間（Phase 2 + 共通化）
+  - メモ: UI非依存なアーキテクチャへの移行の第一歩。LangChainの2ファイルには影響しない
+
+---
+
+## 優先度: 中 (Medium Priority)
+
+### 品質向上
+
+- [ ] 日本語IME入力対応 Phase 2: OSSコントリビューション（Chainlit本体への修正）
   - 目的: 日本語・中国語・韓国語すべてのユーザーのために根本解決
+  - 前提: Phase 1（暫定対応）完了後、必要性を感じたら着手
   - 関連Issue:
     - Issue #2600: 中国語IME（Pinyin）の問題
     - Issue #2598: 韓国語IMEの問題
@@ -85,53 +128,31 @@
     - 暫定回避策が不要になる
     - メンテナンス負担が減る
 
-### 機能拡張
+### 開発環境・運用改善
 
 - [ ] LangSmithの導入
   - 目的: LLM呼び出しのトレーシング、デバッグ、パフォーマンスモニタリング
+  - 背景: LangGraphを使った複雑なエージェント実装後に必要になるツール
   - 実装内容:
     - LangSmith環境変数設定（LANGCHAIN_API_KEY等）
     - 各実装にトレーシング追加
     - ドキュメント更新（セットアップ手順）
   - 見積もり: 2-3時間
   - 参考: https://docs.smith.langchain.com/
-
----
-
-## 優先度: 中 (Medium Priority)
-
-### 開発環境・運用改善
+  - メモ: 現時点では優先度低、複雑なエージェント実装後に再検討
 
 - [ ] 共通コードの分離（src/ディレクトリの導入）
   - 目的: DRY原則、コードの再利用性向上、テスタビリティ向上
   - 実装内容:
     - `src/chat/history.py` - load_chat_history() などの共通関数
+    - `src/chat/checkpoint.py` - LangGraphチェックポイント機構の共通化
     - `src/chat/handlers.py` - エラーハンドリングなどの共通処理
     - `src/chat/models.py` - モデル初期化の共通処理
-    - 各app_*.pyから共通コードを呼び出すようにリファクタリング
-  - 影響範囲: すべてのapp_*.py、import文の追加が必要
+    - 各アプリファイルから共通コードを呼び出すようにリファクタリング
+  - 影響範囲: すべてのアプリファイル、import文の追加が必要
   - 見積もり: 2-3時間
-  - 依存: ディレクトリ構成の見直し完了後に実施
+  - 依存: LangGraphチェックポイント機構導入後に実施（Phase 2と組み合わせ推奨）
   - メモ: 学習用コードとしてのバランスを考慮（過度に抽象化しない）
-
-- [ ] Static type check (型チェック) の導入
-  - 目的: 型エラーを事前に検出し、コードの安全性を向上
-  - 検討ツール:
-    - **mypy**: 最もポピュラーな型チェッカー、厳格なチェック
-    - **pyright**: Microsoft製、高速、VS Code統合が優れている
-    - **pytype**: Google製、型ヒント不要でも推論可能
-  - 実装内容:
-    1. ツール選定（mypyまたはpyright推奨）
-    2. `uv add --dev mypy` または `uv add --dev pyright`
-    3. pyproject.tomlに設定を追加
-    4. 既存コードに型ヒントを追加（段階的に）
-    5. DevContainerに型チェッカー拡張機能を追加（VS Code）
-  - 運用ルール案:
-    - コミット前に `uv run mypy .` または `uv run pyright` を実行
-    - Ruffと同様に手動実行（将来的にGitHub Actionsで自動化）
-  - 影響範囲: pyproject.toml、app.py、.devcontainer/devcontainer.json
-  - 見積もり: 1-2時間
-  - メモ: Ruffと組み合わせることで、コード品質が大幅に向上
 
 
 - [ ] GitHub CLI (gh) の認証方法の見直し
@@ -160,18 +181,8 @@
     1. loguru
     2. 標準logging
     3. Chainlit既定の `cl.logger`
-  - 影響範囲: [app_langchain_sync.py](../app_langchain_sync.py), [app_langchain_streaming.py](../app_langchain_streaming.py), [app_langgraph_sync.py](../app_langgraph_sync.py)、設定ファイル
+  - 影響範囲: [apps/langchain_sync.py](../apps/langchain_sync.py), [apps/langchain_streaming.py](../apps/langchain_streaming.py), [apps/langgraph_sync.py](../apps/langgraph_sync.py), [apps/langgraph_streaming.py](../apps/langgraph_streaming.py)、設定ファイル
   - 見積もり: 1時間
-
-- [ ] LangGraphチェックポイント機構の検討・導入
-  - 目的: Chainlitセッションに依存せずに会話履歴を永続化し、LangGraph内で状態を復元できるようにする
-  - 参考: LangGraphのcheckpointドキュメント、現在の`app_langgraph_sync.py`実装
-  - 実装内容:
-    - チェックポイントストア（ローカルファイルまたはインメモリ）を設定
-    - `agent.ainvoke` 呼び出し時にcheckpointを活用する形へ変更
-    - Chainlitセッションとの役割分担を再検討し、どちらを正本にするか整理
-  - 見積もり: 2-3時間
-  - メモ: 現状のシンプル実装ではChainlitセッションに履歴を保存している。置き換えメリットを検証してから着手
 
 ---
 
