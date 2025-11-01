@@ -192,7 +192,10 @@
 
 - [ ] Loggingの仕組み導入
   - 目的: デバッグ・運用時のトラブルシューティング
-  - 検討項目: loguru vs 標準logging
+  - 検討項目:
+    1. loguru
+    2. 標準logging
+    3. Chainlit既定の `cl.logger`
   - 影響範囲: [app_langchain_sync.py](../app_langchain_sync.py), [app_langchain_streaming.py](../app_langchain_streaming.py), [app_langgraph_sync.py](../app_langgraph_sync.py)、設定ファイル
   - 見積もり: 1時間
 
@@ -269,6 +272,16 @@
     - タプル形式で返されるchunkを適切に処理
   - 見積もり: 3-4時間
   - メモ: 実装パターンはcontext.mdに記録済み。実際のニーズが出てから検討
+
+- [ ] LangGraphチェックポイント機構の検討・導入
+  - 目的: Chainlitセッションに依存せずに会話履歴を永続化し、LangGraph内で状態を復元できるようにする
+  - 参考: LangGraphのcheckpointドキュメント、現在の`app_langgraph_sync.py`実装
+  - 実装内容:
+    - チェックポイントストア（ローカルファイルまたはインメモリ）を設定
+    - `agent.ainvoke` 呼び出し時にcheckpointを活用する形へ変更
+    - Chainlitセッションとの役割分担を再検討し、どちらを正本にするか整理
+  - 見積もり: 2-3時間
+  - メモ: 現状のシンプル実装ではChainlitセッションに履歴を保存している。置き換えメリットを検証してから着手
 
 - [ ] LangGraphツール呼び出しの実装
   - 目的: 外部APIやデータベースとの連携
