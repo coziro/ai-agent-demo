@@ -2,7 +2,7 @@
 
 このファイルには、**今現在進行中の作業**を記録します。VS Codeを再起動したりコンテナをrebuildした後でも、ここを見れば作業を再開できます。
 
-**最終更新:** 2025-10-31
+**最終更新:** 2025-11-01
 
 ---
 
@@ -112,6 +112,38 @@
 - 推測ではなく実際のソースコード調査の重要性
 - 公式ドキュメントだけでは不十分なケースがある
 - エラーメッセージを丁寧に読み、根本原因を特定する
+
+---
+
+### LangChain/LangGraphハンドラのリファクタリング - 2025-11-01
+
+**完了内容:**
+- 4つのハンドラ（LangChain/LangGraph × sync/streaming）の履歴管理を `load_chat_history()` に統一
+- セッションキーを `chat_history_key` に揃え、変数名・型ヒント・例外処理を整理
+- LangGraph版に `ChatState` を導入し、`agent.ainvoke` のレスポンスをそのまま履歴へ反映
+- `.claude/todo.md` にチェックポイント導入タスクを追加、今後の検討事項を明確化
+
+**重要な技術的発見:**
+1. Chainlitの`Message.stream_token()`が内部で`content`を蓄積しているため、ストリーミング後はそのまま履歴に保存できる
+2. LangGraphでは`StateGraph(ChatState)`とすることでTypedDictベースの型情報をIDE補完に活かせる
+3. LangGraphレスポンス（`agent.ainvoke`）を再ラップせずに履歴へ統合することで重複生成を防げる
+
+**調査方法:**
+- Chainlitの`message.py`を確認して`stream_token`の挙動を把握
+- LangGraphの型定義を読み、StateGraphに独自TypedDictを渡す方法を検証
+- 既存コードと動作を比較しながら命名や型の統一案を洗い出し
+
+**成果物:**
+- [app_langchain_sync.py](../app_langchain_sync.py)
+- [app_langchain_streaming.py](../app_langchain_streaming.py)
+- [app_langgraph_sync.py](../app_langgraph_sync.py)
+- [app_langgraph_streaming.py](../app_langgraph_streaming.py)
+- Pull Request #7（Refine Lang chat handlers、マージ済み）
+
+**今後のタスク:**
+- `.claude/todo.md` に記載した LangGraph チェックポイント機構の検討・導入
+- LangGraphストリーミング版で複数メッセージ／更新ストリームに対応するか判断
+- ログ出力（標準logging / loguru / cl.logger）の方針決定と実装
 
 ---
 

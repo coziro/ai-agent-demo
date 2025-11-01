@@ -87,7 +87,7 @@
 
 ### コード品質・信頼性の向上
 
-- [ ] 既存実装のリファクタリング（コード品質向上）
+- [x] 既存実装のリファクタリング（コード品質向上） - 2025-11-01
   - 目的: 無駄な処理の削除、型ヒントの追加、変数名の整理
   - 対象ファイル:
     - [app_langchain_sync.py](../app_langchain_sync.py)
@@ -109,6 +109,11 @@
   - 依存: Phase 2a（LangGraphストリーミング実装）の完了
   - メモ: 型チェック導入前に実施すると効果的
   - 影響範囲: 4つの実装ファイル全て
+  - 完了内容:
+    - `load_chat_history()` の共通化とセッションキー統一
+    - LangGraph版に `ChatState` を導入し `agent.ainvoke` のレスポンスを直接保存
+    - ストリーミング時は `Message.stream_token()` の蓄積をそのまま履歴に反映
+    - Pull Request #7（Refine Lang chat handlers）でマージ済み
 
 ### アーキテクチャ・構成
 
