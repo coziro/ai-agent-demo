@@ -6,7 +6,7 @@ SYSTEM_PROMPT = "You are a helpful assistant."
 
 model = ChatOpenAI(model="gpt-5-nano")
 
-CHAT_HISTORY_KEY = "session_chat_history"
+CHAT_HISTORY_KEY = "chat_history_key"
 
 
 def load_chat_history() -> list[AnyMessage]:
