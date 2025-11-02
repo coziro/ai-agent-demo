@@ -1450,3 +1450,127 @@ command: uv run chainlit run ${CHAINLIT_APP:-apps/langchain_streaming.py} --host
 - 共通コードが増えたら `src/` ディレクトリを検討（todo.md記載済み）
 - アプリ数が増えても、フラット構造を維持する方針（最大10ファイル程度まで）
 
+---
+
+### LangGraphコードの可読性向上（明示的な型構築と変数名の改善） - 2025-11-02
+
+**状況・課題:**
+- `langgraph_sync.py`のコードは動作するが、可読性や保守性に改善の余地があった
+- 辞書リテラルを直接使用していたため、型情報が不明瞭
+- 変数名が汎用的で、部分更新の意図が読み取りにくい
+- 関数にドキュメントがなく、LangGraphの状態管理の仕組みが分かりにくい
+
+**検討した選択肢:**
+
+1. **辞書リテラルを使用（現状）:**
+   ```python
+   agent_response = await agent.ainvoke({"messages": chat_history})
+   ```
+   - ❌ 型情報が不明瞭（IDEの補完が効きにくい）
+   - ❌ "messages"というキーが正しいか、コードを読まないと分からない
+
+2. **ChatStateを明示的に構築:**
+   ```python
+   agent_request = ChatState(messages=chat_history)
+   agent_response = await agent.ainvoke(agent_request)
+   ```
+   - ✅ 型情報が明確（IDEの補完が効く）
+   - ✅ `ChatState`の構造を意識できる
+   - ✅ 変数名で意図が明確になる
+
+**決定内容:**
+
+**選択肢2を採用**: `ChatState`を明示的に構築し、変数名で意図を明確化
+
+**実装内容:**
+
+1. **明示的な型構築:**
+   ```python
+   # Before
+   agent_response = await agent.ainvoke({"messages": chat_history})
+
+   # After
+   agent_request = ChatState(messages=chat_history)
+   agent_response = await agent.ainvoke(agent_request)
+   ```
+
+2. **変数名の改善（部分更新の意図を明確化）:**
+   ```python
+   # Before
+   async def call_llm(state: ChatState) -> ChatState:
+       ai_response = await model.ainvoke(messages)
+       return {"messages": [ai_response]}
+
+   # After
+   async def call_llm(state: ChatState) -> ChatState:
+       """LLMを呼び出してレスポンスを生成する。
+
+       LangGraphは返り値の辞書を現在の状態にマージ（部分更新）する。
+       messagesフィールドはリストなので、新しいメッセージが追加される。
+       """
+       ai_response = await model.ainvoke(messages)
+       state_update = {"messages": [ai_response]}
+       return state_update
+   ```
+
+3. **import文の整理:**
+   - 不要な`AnyMessage`のimportを削除
+   - import順序を標準化（標準ライブラリ → サードパーティ → ローカル）
+
+**理由:**
+
+1. **可読性の向上:**
+   - `agent_request` という変数名で「LLMへのリクエスト」であることが明確
+   - `state_update` という変数名で「状態の部分更新」であることが明確
+   - 辞書リテラルだけでは分からない意図が、変数名で表現される
+
+2. **型安全性の向上:**
+   - `ChatState(messages=chat_history)` により、IDEの型チェックが効く
+   - タイポや構造ミスを早期に発見できる
+   - リファクタリング時の影響範囲が明確
+
+3. **学習用コードとしての価値:**
+   - LangGraphの状態管理の仕組み（部分更新）がdocstringで説明される
+   - 初学者が「なぜ辞書を返すのか」を理解しやすい
+   - ベストプラクティスを示す実装例として機能する
+
+4. **保守性の向上:**
+   - 将来的にフィールドが増えても、構造が明確
+   - コードレビュー時に意図が伝わりやすい
+   - バグが発生したときにデバッグしやすい
+
+**トレードオフ:**
+
+- コード量がわずかに増える（1-2行程度）
+- しかし、可読性と保守性のメリットがコストを大きく上回る
+
+**マジックストリング対策について:**
+
+当初はノード名やフィールド名の定数化も検討したが、以下の理由で見送り:
+
+1. **現状は1ノードのみ**: `call_llm.__name__` で十分
+2. **YAGNI原則**: 複数ノードになってから検討
+3. **学習用コードのシンプルさ優先**: 過度な抽象化を避ける
+
+将来的に複数ノードが必要になった場合は、クラスベース実装への移行を検討（todo.md記載済み）。
+
+**影響範囲:**
+- [apps/langgraph_sync.py](../apps/langgraph_sync.py)
+- Pull Request: #9（feature/refactor-langgraph-sync）
+
+**参考資料:**
+- LangGraph公式ドキュメント: 状態管理とノード実装
+- Python型ヒントのベストプラクティス
+- 変数名の付け方（Clean Code原則）
+
+**学び:**
+- 明示的な型構築により、コードの意図が明確になる
+- 変数名で「何のための変数か」を表現することが重要
+- 学習用コードでは、シンプルさと明確さのバランスが大切
+- docstringは単なるドキュメントではなく、設計の意図を伝える手段
+
+**今後の方針:**
+- この改善パターンを他の3ファイルに適用するかは、必要性が出てから判断
+- まずは `langgraph_sync.py` で効果を確認
+- 効果が高ければ、他のファイルにも適用を検討
+
