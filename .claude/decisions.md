@@ -1603,3 +1603,117 @@ command: uv run chainlit run ${CHAINLIT_APP:-apps/langchain_streaming.py} --host
 - この改善パターンを他の3ファイルに適用するかは、必要性が出てから判断
 - まずは `langgraph_sync.py` で効果を確認
 - 効果が高ければ、他のファイルにも適用を検討
+
+---
+
+### 日本語IME入力対応 Phase 2の方針変更（OSSコントリビューション → 情報共有） - 2025-11-02
+
+**状況・課題:**
+- Phase 1で custom_js による日本語IME入力問題の解決策を実装完了（PR #11）
+- 当初はPhase 2として「Chainlit本体へのPR作成」を計画（優先度: 中）
+- しかし、深い技術調査（[.claude/ime-investigation.md](.claude/ime-investigation.md)）の結果、OSS貢献の現実性を再評価する必要が出てきた
+
+**検討した選択肢:**
+
+1. **Chainlit本体へのPR作成（当初案）:**
+   - Chainlitフロントエンド（React）に`onCompositionStart/End`ハンドラを追加
+   - 中国語・韓国語・日本語すべてで動作確認
+   - 既存Issues #2600/#2598を解決
+   - **必要な作業:**
+     - React controlled componentsをuncontrolled componentsに変更
+     - メッセージ履歴、コマンド機能、履歴機能との整合性確保
+     - 大規模なリファクタリング
+   - **見積もり:** 数週間〜数ヶ月
+   - ❌ Reactの根本的な制約（async setState）により、controlled componentsでのIME対応は困難
+   - ❌ Chainlit maintainersの優先度が低い（Issues #2600/#2598が2年以上オープン）
+   - ❌ React team自体が8年以上IME問題を修正していない（Issues #8683/#3926）
+
+2. **custom_jsアプローチのままで終了:**
+   - Phase 1の実装で十分に動作している
+   - 追加作業なし
+   - ❌ 同じ問題に悩む他のユーザーを助けられない
+   - ❌ 調査で得た知見が埋もれてしまう
+
+3. **GitHub Issuesでの情報共有（新提案）:**
+   - Chainlit Issues #2600（中国語IME）と#2598（韓国語IME）にコメント投稿
+   - custom_jsによる解決策を共有
+   - Classi技術ブログへのリンクを提供
+   - ime-investigation.mdの主要な知見を要約
+   - **必要な作業:**
+     - GitHub Issueコメントの下書き作成
+     - 英語でのコメント投稿
+     - custom_jsコードとconfig.toml設定の共有
+   - **見積もり:** 30分
+   - ✅ 同じ問題に悩む他のユーザーを助けられる
+   - ✅ Chainlit maintainersにも情報提供できる
+   - ✅ OSSコミュニティへの貢献（情報共有という形）
+   - ✅ 現実的な時間投資
+
+**決定内容:**
+
+**選択肢3を採用**: GitHub Issuesでの情報共有に変更
+
+- **スコープ変更:**
+  - FROM: "OSSコントリビューション（Chainlit本体への修正PR）"
+  - TO: "コミュニティへの情報共有（GitHub Issueコメント）"
+- **優先度変更:**
+  - FROM: 優先度: 中
+  - TO: 優先度: 低（アイデア）
+- **タスク内容:**
+  - Chainlit Issues #2600と#2598にコメント投稿
+  - custom_jsアプローチとClassi技術ブログへのリンクを共有
+  - ime-investigation.mdの主要な知見を要約
+  - PRは作成しない（現実的でないため）
+
+**理由:**
+
+1. **React制約の根本性:**
+   - React controlled componentsの async setState がIME対応の根本的な障壁
+   - Reactチームが8年以上修正していない問題（Issues #8683, #3926）
+   - Chainlitがuncontrolled componentsに移行するのは非現実的（大規模リファクタ必要）
+
+2. **Chainlit既存コードの制約:**
+   - Chainlitは既に`onCompositionStart/End`を実装しているが機能していない
+   - React controlled componentsの制約により、イベントハンドラが効かない
+   - custom_jsのような外部アプローチでしか解決できない
+
+3. **調査の結果明らかになった事実:**
+   - custom_jsが**唯一の現実的な解決策**
+   - イベントキャプチャフェーズでReactより先にブロックする方法のみ有効
+   - Classi開発者も同じアプローチを採用（Google Meetで実績あり）
+
+4. **コストとベネフィットのバランス:**
+   - PRアプローチ: 数週間〜数ヶ月の作業 + 大規模リファクタ + メンテナンスの複雑化
+   - 情報共有アプローチ: 30分の作業 + 同じ問題に悩む他のユーザーを即座に助ける
+   - 情報共有でも十分にOSSコミュニティに貢献できる
+
+5. **実用性優先:**
+   - 完璧なPRを作成するよりも、実用的な解決策を共有する方が価値が高い
+   - 中国語・韓国語ユーザーも同じ問題で困っている（Issues #2600/#2598）
+   - 情報共有により、他のユーザーがすぐに問題を解決できる
+
+**影響範囲:**
+- [.claude/todo.md](.claude/todo.md) - Phase 2タスクの再定義
+- [.claude/ime-investigation.md](.claude/ime-investigation.md) - 包括的な技術調査ドキュメント（既存）
+- 将来の情報共有アクション: GitHub Issues #2600/#2598へのコメント投稿
+
+**参考資料:**
+- [.claude/ime-investigation.md](.claude/ime-investigation.md) - 1,000行以上の技術調査
+- Chainlit Issue #2600: https://github.com/Chainlit/chainlit/issues/2600
+- Chainlit Issue #2598: https://github.com/Chainlit/chainlit/issues/2598
+- React Issue #8683: https://github.com/facebook/react/issues/8683
+- React Issue #3926: https://github.com/facebook/react/issues/3926
+- Classi技術ブログ: https://tech.classi.jp/entry/2024/04/23/183000
+
+**学び:**
+- OSSコントリビューションは「PR作成」だけではない
+- 情報共有、ドキュメント作成、Issue報告もコミュニティへの重要な貢献
+- 現実的なアプローチを選ぶことで、より多くのユーザーを助けられる
+- 深い技術調査の価値は、その知見を共有することで最大化される
+- React controlled componentsとIME入力の相性問題は業界全体の課題
+
+**今後のアクション（オプション）:**
+- 時間がある時にGitHub Issues #2600/#2598にコメント投稿
+- custom_jsアプローチを簡潔に説明
+- Classi技術ブログと本プロジェクトのime-investigation.mdを紹介
+- 他の言語（中国語・韓国語）でも同じアプローチが有効であることを示す
