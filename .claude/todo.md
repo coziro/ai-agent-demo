@@ -70,33 +70,7 @@
 
 ### 品質向上
 
-- [ ] 日本語IME入力対応 Phase 2: OSSコントリビューション（Chainlit本体への修正）
-  - 目的: 日本語・中国語・韓国語すべてのユーザーのために根本解決
-  - 前提: Phase 1（暫定対応）完了後、必要性を感じたら着手
-  - 関連Issue:
-    - Issue #2600: 中国語IME（Pinyin）の問題
-    - Issue #2598: 韓国語IMEの問題
-    - 日本語の報告はまだない → 追加する
-  - タスク:
-    1. Issue #2600と#2598に日本語でも同じ問題があるとコメント
-    2. 両方のIssueに👍リアクション（優先度を上げるため）
-    3. Chainlitのフロントエンドコードを調査（React）
-    4. Composition Events処理を追加するPRを作成
-    5. テスト: 日本語・中国語・韓国語すべてで動作確認
-  - 技術詳細:
-    - 場所: フロントエンドのReactコンポーネント（入力フィールド）
-    - 修正内容: `onCompositionStart/End`イベントハンドラを追加
-    - 実装例は decisions.md と references.md に記載済み
-  - 参考資料:
-    - Issue #2600: https://github.com/Chainlit/chainlit/issues/2600
-    - Issue #2598: https://github.com/Chainlit/chainlit/issues/2598
-    - Web標準: MDN Composition Events
-  - 見積もり: 3-5時間（コード調査+実装+テスト+PR作成）
-  - 影響範囲: Chainlitリポジトリ（フロントエンド）
-  - メリット:
-    - 自分のアプリだけでなく、全世界のユーザーに貢献
-    - 暫定回避策が不要になる
-    - メンテナンス負担が減る
+現在優先度中のタスクはありません。
 
 ### 開発環境・運用改善
 
@@ -222,6 +196,24 @@
   - 目的: 本番環境への展開準備
   - 依存: デプロイ方法の決定（decisions.md参照）
   - 見積もり: 1時間
+
+- [ ] 日本語IME入力対応: コミュニティへの情報共有（オプション）
+  - 目的: 同じ問題に悩む他のユーザーを助ける
+  - 背景:
+    - Phase 1で custom_js による解決策を確立
+    - Chainlit本体へのPRは現実的でない（React制約、大規模リファクタ必要）
+    - React teamは8年以上修正せず（Issues #8683, #3926）
+  - アクション:
+    - Chainlit Issues #2600と#2598にコメント投稿
+    - custom_jsアプローチとClassi技術ブログへのリンクを共有
+    - ime-investigation.mdの主要な知見を要約
+  - スコープ: 情報共有のみ（PRは作成しない）
+  - 見積もり: 30分
+  - 参考資料:
+    - [.claude/ime-investigation.md](.claude/ime-investigation.md)
+    - Chainlit Issue #2600: https://github.com/Chainlit/chainlit/issues/2600
+    - Chainlit Issue #2598: https://github.com/Chainlit/chainlit/issues/2598
+  - メモ: PRは現実的でないため情報共有に変更（2025-11-02）
 
 ---
 
