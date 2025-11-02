@@ -64,6 +64,39 @@
   - 見積もり: 1-2時間
   - メモ: 2025-11-01の議論を反映。まずは`langgraph_sync.py`で試して、効果を確認してから他ファイルへの適用を判断
 
+- [ ] ノードのクラスベース実装への移行（将来の拡張性向上）
+  - 目的: 複数ノード実装時の可読性・保守性・拡張性を向上させる
+  - 背景:
+    - 現在は1ノードのみで関数ベース実装（`call_llm.__name__`を使用）
+    - 複数ノードになった場合、クラスベースの方が管理しやすい
+    - ノード名とロジックをカプセル化し、Single Source of Truthを実現
+  - 実装内容（Option 2: クラス変数 + staticmethod）:
+    ```python
+    class Node(ABC):
+        name: str
+        @staticmethod
+        @abstractmethod
+        async def execute(state: ChatState) -> ChatState:
+            pass
+
+    class CallLLMNode(Node):
+        name = "call_llm"
+        @staticmethod
+        async def execute(state: ChatState) -> ChatState:
+            ...
+
+    graph.add_node(CallLLMNode.name, CallLLMNode.execute)
+    ```
+  - 設計判断が必要な項目:
+    - インスタンスメソッド vs staticmethod
+    - `register()`メソッドの導入（ファクトリーパターン）
+    - 抽象基底クラスの設計
+  - 影響範囲: LangGraphの2ファイル（[apps/langgraph_sync.py](../apps/langgraph_sync.py), [apps/langgraph_streaming.py](../apps/langgraph_streaming.py)）
+  - 前提条件: 複数ノードの実装が必要になってから検討
+  - 見積もり: 2-3時間（設計検討 + 実装 + テスト）
+  - 優先度: 低（複数ノード実装時に再評価）
+  - メモ: 2025-11-02の議論を反映。現状は`call_llm.__name__`で十分だが、将来的にはクラスベースが有力
+
 ### 品質向上・開発環境改善
 
 - [ ] Static type check (型チェック) の導入
