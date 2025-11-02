@@ -41,19 +41,6 @@
 
 ### 品質向上・開発環境改善
 
-- [x] Static type check (型チェック) の導入
-  - 目的: 型エラーを事前に検出し、コードの安全性を向上（特に複雑な実装前に導入推奨）
-  - 決定: **Pyright** を採用し、`typeCheckingMode = "standard"` をデフォルト設定にする
-  - 実装内容:
-    1. `uv add --dev pyright` → `dev` グループに追加済み
-    2. `pyproject.toml` の `[tool.pyright]` を作成（`include = ["apps"]`, `reportMissingTypeStubs = false`）
-    3. `apps/` 配下のChainlit/LangGraph実装をPyright対応（Unknown回避のために `cast`/`assert`/ガードを追加）
-    4. DevContainer で `libatomic1` をインストール（Pyright依存のnodeenv動作用）
-  - 運用ルール:
-    - コミット前に `uv run pyright` を実行（Ruffと同列の手動チェック）
-    - 将来的にGitHub Actionsへ統合する余地あり
-  - 参考PR: #10 (Setup Pyright and resolve type warnings)
-
 - [ ] 日本語IME入力対応 Phase 1: 暫定対応（Qiita回避策）
   - 問題: 日本語変換確定のEnterでメッセージが送信されてしまう
   - 目的: 日本語ユーザーの使いやすさ向上（すぐに使えるようにする）
@@ -365,6 +352,15 @@
     - ChainlitのストリーミングAPI実装（`stream_token`）の内部動作を理解
     - LangGraphのStateGraphにTypedDictを渡すと型補完が効きやすい
     - LangGraphレスポンスを再ラップせず履歴へ統合すると二重生成を防げる
+
+### 2025-11-03
+
+- [x] Static type check (型チェック) の導入
+  - Pyright を採用し、`pyproject.toml` へ `[tool.pyright]` を追加 (`typeCheckingMode = "standard"`, `include = ["apps"]`)
+  - Chainlit/LangGraph 各アプリで `cast`/`assert`/ガードを追加して Unknown を解消
+  - DevContainer に `libatomic1` を追加して Pyright の `nodeenv` 依存をサポート
+  - 運用ルール: コミット前に `uv run pyright` を実行（Ruff と同列の手動チェック）
+  - PR #10 にてマージ済み
 
 ### 2025-10-31
 
