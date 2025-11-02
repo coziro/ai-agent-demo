@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import TypedDict, cast
 
 import chainlit as cl
 from langchain.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage
@@ -22,7 +22,7 @@ def load_chat_history() -> list[AnyMessage]:
     if chat_history is None:
         chat_history = [SystemMessage(SYSTEM_PROMPT)]
         cl.user_session.set(CHAT_HISTORY_KEY, chat_history)
-    return chat_history
+    return cast(list[AnyMessage], chat_history)
 
 
 class ChatState(TypedDict):
@@ -58,12 +58,15 @@ async def on_message(request_message: cl.Message) -> None:
             {"messages": chat_history},
             stream_mode="messages",
         ):
-            if message.content:
-                await reply_message.stream_token(message.content)
+            if not isinstance(message, AIMessage):
+                continue
+
+            message_content = message.content
+            if isinstance(message_content, str) and message_content:
+                await reply_message.stream_token(message_content)
 
         chat_history.append(AIMessage(reply_message.content))
         await reply_message.send()
 
     except Exception as e:
         await cl.ErrorMessage(content=repr(e)).send()
-

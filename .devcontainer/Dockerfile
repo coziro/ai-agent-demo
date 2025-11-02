@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     vim \
     gh \
+    libatomic1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspaces/ai-agent-demo

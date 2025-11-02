@@ -1,4 +1,4 @@
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import chainlit as cl
 from langchain.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage
@@ -23,7 +23,7 @@ def load_chat_history() -> list[AnyMessage]:
     if chat_history is None:
         chat_history = [SystemMessage(SYSTEM_PROMPT)]
         cl.user_session.set(CHAT_HISTORY_KEY, chat_history)
-    return chat_history
+    return cast(list[AnyMessage], chat_history)
 
 
 class ChatState(BaseModel):
@@ -90,13 +90,13 @@ async def on_message(user_request: cl.Message) -> None:
         current_state = ChatState(messages=chat_history)
         response_dict = await agent.ainvoke(current_state)
         updated_state = ChatState(**response_dict)
-        last_message: AIMessage = updated_state.messages[-1]
+        last_message = updated_state.messages[-1]
+        assert isinstance(last_message, AIMessage)
         chat_history.append(last_message)
 
-        user_response = cl.Message(content=last_message.content)
+        user_response = cl.Message(content=str(last_message.content))
         await user_response.send()
 
     except Exception as e:
         await cl.ErrorMessage(content=repr(e)).send()
         raise e
-

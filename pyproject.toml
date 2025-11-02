@@ -15,8 +15,14 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pyright>=1.1.407",
     "ruff>=0.14.2",
 ]
+
+[tool.pyright]
+include = ["apps"]
+typeCheckingMode = "standard"
+reportMissingTypeStubs = false
 
 [tool.ruff]
 # Set the maximum line length to 100
