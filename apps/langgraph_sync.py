@@ -27,6 +27,21 @@ def load_chat_history() -> list[AnyMessage]:
 
 
 class ChatState(BaseModel):
+    """State schema for the chat agent graph.
+
+    This class defines the structure of the state that flows through the
+    LangGraph nodes. It uses Pydantic BaseModel for runtime validation
+    and type safety.
+
+    Class Variables:
+        MESSAGES: Field name constant for the messages field. Used to ensure
+            consistency when accessing or updating the state.
+
+    Attributes:
+        messages: List of conversation messages including system prompts,
+            user inputs, and AI responses.
+    """
+
     # Field name
     MESSAGES: ClassVar[str] = "messages"
 
@@ -35,6 +50,19 @@ class ChatState(BaseModel):
 
 
 async def call_llm(state: ChatState) -> dict:
+    """Call the LLM with the current conversation history.
+
+    This node function invokes the language model with the complete message
+    history from the chat state and returns a partial state update containing
+    the AI's response.
+
+    Args:
+        state: Current chat state containing the message history.
+
+    Returns:
+        A dictionary containing the partial state update with the AI's response.
+        The dictionary uses ChatState.MESSAGES as the key.
+    """
     chat_history = state.messages
     response = await model.ainvoke(chat_history)
     update_field = {ChatState.MESSAGES: [response]}
