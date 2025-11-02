@@ -1,9 +1,10 @@
-from typing import TypedDict
+from typing import ClassVar
 
 import chainlit as cl
 from langchain.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
+from pydantic import BaseModel
 
 SYSTEM_PROMPT = "You are a helpful assistant."
 
@@ -25,20 +26,25 @@ def load_chat_history() -> list[AnyMessage]:
     return chat_history
 
 
-class ChatState(TypedDict):
+class ChatState(BaseModel):
+    # Field name
+    MESSAGES: ClassVar[str] = "messages"
+
+    # State Field
     messages: list[AnyMessage]
 
 
-async def call_llm(state: ChatState) -> ChatState:
-    chat_history = state["messages"]
+async def call_llm(state: ChatState) -> dict:
+    chat_history = state.messages
     response = await model.ainvoke(chat_history)
-    return {"messages": [response]}
+    update_field = {ChatState.MESSAGES: [response]}
+    return update_field
 
 
 graph = StateGraph(ChatState)
 graph.add_node(call_llm)
-graph.add_edge(START, "call_llm")
-graph.add_edge("call_llm", END)
+graph.add_edge(START, call_llm.__name__)
+graph.add_edge(call_llm.__name__, END)
 agent = graph.compile()
 
 
@@ -55,7 +61,8 @@ async def on_message(user_request: cl.Message) -> None:
 
         current_state = ChatState(messages=chat_history)
         updated_state = await agent.ainvoke(current_state)
-        last_message: AIMessage = updated_state["messages"][-1]
+        updated_state = ChatState(**updated_state)
+        last_message: AIMessage = updated_state.messages[-1]
         chat_history.append(last_message)
 
         user_response = cl.Message(content=last_message.content)
@@ -63,4 +70,5 @@ async def on_message(user_request: cl.Message) -> None:
 
     except Exception as e:
         await cl.ErrorMessage(content=repr(e)).send()
+        raise e
 
