@@ -1,3 +1,5 @@
+from typing import cast
+
 import chainlit as cl
 from langchain.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
@@ -19,7 +21,7 @@ def load_chat_history() -> list[AnyMessage]:
     if chat_history is None:
         chat_history = [SystemMessage(SYSTEM_PROMPT)]
         cl.user_session.set(CHAT_HISTORY_KEY, chat_history)
-    return chat_history
+    return cast(list[AnyMessage], chat_history)
 
 
 @cl.on_chat_start
@@ -36,7 +38,7 @@ async def on_message(request_message: cl.Message) -> None:
         model_response = await model.ainvoke(chat_history)
         chat_history.append(AIMessage(model_response.content))
 
-        reply_message = cl.Message(content=model_response.content)
+        reply_message = cl.Message(content=str(model_response.content))
         await reply_message.send()
 
     except Exception as e:
