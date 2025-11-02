@@ -2,7 +2,7 @@
 
 このファイルには、今後やるべきタスクを記録します。優先順位をつけて管理しましょう。
 
-**最終更新:** 2025-11-02（完了したタスクを整理）
+**最終更新:** 2025-11-02（IME Phase 1完了）
 
 ---
 
@@ -41,18 +41,7 @@
 
 ### 品質向上・開発環境改善
 
-- [ ] 日本語IME入力対応 Phase 1: 暫定対応（Qiita回避策）
-  - 問題: 日本語変換確定のEnterでメッセージが送信されてしまう
-  - 目的: 日本語ユーザーの使いやすさ向上（すぐに使えるようにする）
-  - 解決策: `public/custom.js` を作成してIME状態を追跡
-  - 手順:
-    1. `public/custom.js` ファイルを作成
-    2. `.chainlit/config.toml` に `custom_js = "/public/custom.js"` を追加
-    3. JavaScriptでIME compositionイベントをハンドリング
-  - 参考: Qiita記事 https://qiita.com/bohemian916/items/4f3e860904c24922905a
-  - 見積もり: 1-2時間
-  - 影響範囲: public/custom.js（新規）、.chainlit/config.toml
-  - メモ: Phase 2（OSSコントリビューション）は優先度中に別タスクとして配置
+現在優先度の高いタスクはありません。
 
 ### 機能拡張
 
@@ -304,6 +293,23 @@
 ## 完了 (Completed)
 
 ### 2025-11-02
+
+- [x] 日本語IME入力対応 Phase 1: 暫定対応
+  - 完了内容:
+    - `public/custom.js` を作成（3重の安全装置: グローバル変数、e.isComposing、keyCode 229）
+    - `.chainlit/config.toml` に `custom_js = "/public/custom.js"` を追加
+    - Chrome/Safari on macOSで動作確認完了（IME変換中のEnterブロック成功）
+    - コメント・ログメッセージは英語で記述
+  - 影響範囲: [public/custom.js](../public/custom.js)（新規、56行）、[.chainlit/config.toml](../.chainlit/config.toml)
+  - Pull Request: #11（feature/ime-phase1）
+  - 参考資料:
+    - [.claude/ime-investigation.md](.claude/ime-investigation.md)（1,000行以上の技術調査）
+    - Classi技術ブログ: https://tech.classi.jp/entry/2024/04/23/183000
+  - 学び:
+    - イベントキャプチャフェーズでReactより先にイベントをブロック
+    - Safari特有の問題（keyCode 229の必要性）
+    - 3重の安全装置でブラウザ互換性を確保
+    - Classi方式（IME変換中のみブロック）でシンプルかつ確実な実装
 
 - [x] `langgraph_sync.py`のリファクタリング（可読性向上）
   - 完了内容:
