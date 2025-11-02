@@ -2,7 +2,7 @@
 
 このファイルには、**今現在進行中の作業**を記録します。VS Codeを再起動したりコンテナをrebuildした後でも、ここを見れば作業を再開できます。
 
-**最終更新:** 2025-11-03（Pyright導入と型チェック修正の記録を追加）
+**最終更新:** 2025-11-02（IME Phase 1完了の記録を追加）
 
 ---
 
@@ -60,6 +60,32 @@
 ---
 
 ## 最近完了したタスク
+
+### 日本語IME入力対応 Phase 1 - 2025-11-02
+
+**完了内容:**
+- `.claude/ime-investigation.md` を作成（1,000行以上の技術調査ドキュメント）
+- `public/custom.js` を作成（3重の安全装置: グローバル変数、e.isComposing、keyCode 229）
+- `.chainlit/config.toml` に `custom_js = "/public/custom.js"` を追加
+- Chrome on macOSで動作確認完了（IME変換中のEnterブロック成功）
+- PR [#11](https://github.com/coziro/ai-agent-demo/pull/11) を作成・マージ
+
+**技術的な学び:**
+- イベントキャプチャフェーズでReactより先にイベントをブロック
+- Safari特有の問題（keyCode 229が非推奨だが必要）
+- 3重の安全装置でブラウザ互換性を確保
+- Classi方式（IME変換中のみブロック）でシンプルかつ確実な実装
+
+**参考資料:**
+- [.claude/ime-investigation.md](.claude/ime-investigation.md) - 包括的な技術調査
+- Classi技術ブログ: https://tech.classi.jp/entry/2024/04/23/183000
+
+**フォローアップ（オプション）:**
+- Safari/Firefoxでの動作確認
+- 中国語/韓国語IMEでのテスト
+- Phase 2: Chainlit本体へのPR（[todo.md優先度: 中](todo.md)参照）
+
+---
 
 ### Pyright導入と型チェック修正 - 2025-11-03
 
