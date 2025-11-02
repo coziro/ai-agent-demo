@@ -88,8 +88,8 @@ async def on_message(user_request: cl.Message) -> None:
         chat_history.append(HumanMessage(user_request.content))
 
         current_state = ChatState(messages=chat_history)
-        updated_state = await agent.ainvoke(current_state)
-        updated_state = ChatState(**updated_state)
+        response_dict = await agent.ainvoke(current_state)
+        updated_state = ChatState(**response_dict)
         last_message: AIMessage = updated_state.messages[-1]
         chat_history.append(last_message)
 
