@@ -2,7 +2,7 @@
 
 このファイルには、今後やるべきタスクを記録します。優先順位をつけて管理しましょう。
 
-**最終更新:** 2025-11-02（IME Phase 1完了）
+**最終更新:** 2025-11-02（todo.md優先順位見直し: 共通コード分離を最優先に）
 
 ---
 
@@ -41,7 +41,18 @@
 
 ### 品質向上・開発環境改善
 
-現在優先度の高いタスクはありません。
+- [ ] 共通コードの分離（src/ディレクトリの導入）
+  - 目的: DRY原則、コードの再利用性向上、テスタビリティ向上
+  - 背景: langgraph_sync.pyとlanggraph_streaming.pyで既にコード重複が発生している
+  - 実装内容:
+    - `src/chat/history.py` - load_chat_history() などの共通関数
+    - `src/chat/checkpoint.py` - LangGraphチェックポイント機構の共通化（将来対応）
+    - `src/chat/handlers.py` - エラーハンドリングなどの共通処理
+    - `src/chat/models.py` - モデル初期化の共通処理
+    - 各アプリファイルから共通コードを呼び出すようにリファクタリング
+  - 影響範囲: すべてのアプリファイル、import文の追加が必要
+  - 見積もり: 2-3時間
+  - メモ: 学習用コードとしてのバランスを考慮（過度に抽象化しない）
 
 ### 機能拡張
 
@@ -51,17 +62,19 @@
     - Chainlit依存度を下げ、他のUI（Streamlit、Jupyter Notebook、独自フロントエンド）への移行を容易にする
     - ChainlitはあくまでUIの一つという位置付けにする
     - 現在のメッセージ履歴管理をChainlitセッションから脱却させる
+  - 前提条件: 共通コードの分離が完了していること
   - 参考: LangGraphのcheckpointドキュメント、現在の[apps/langgraph_sync.py](../apps/langgraph_sync.py)実装
   - 実装内容:
     - チェックポイントストア（ローカルファイルまたはインメモリ）を設定
     - `agent.ainvoke` 呼び出し時にcheckpointを活用する形へ変更
     - Chainlitセッションとの役割分担を再検討し、どちらを正本にするか整理
+    - 共通化された `src/chat/checkpoint.py` に実装
   - 影響範囲: LangGraphの2ファイルのみ（[apps/langgraph_sync.py](../apps/langgraph_sync.py), [apps/langgraph_streaming.py](../apps/langgraph_streaming.py)）
   - 実装アプローチ（段階的）:
     1. まず[apps/langgraph_sync.py](../apps/langgraph_sync.py)で試す（検証・動作確認）
     2. 次に[apps/langgraph_streaming.py](../apps/langgraph_streaming.py)に適用
-    3. 共通コードの分離タスク（優先度中）と組み合わせて共通化を検討
-  - 見積もり: 2-3時間（Phase 1のみ）、追加2-3時間（Phase 2 + 共通化）
+    3. `src/chat/checkpoint.py` で共通化
+  - 見積もり: 2-3時間（Phase 1のみ）、追加1-2時間（Phase 2 + 共通化）
   - メモ: UI非依存なアーキテクチャへの移行の第一歩。LangChainの2ファイルには影響しない
 
 ---
@@ -84,19 +97,6 @@
   - 見積もり: 2-3時間
   - 参考: https://docs.smith.langchain.com/
   - メモ: 現時点では優先度低、複雑なエージェント実装後に再検討
-
-- [ ] 共通コードの分離（src/ディレクトリの導入）
-  - 目的: DRY原則、コードの再利用性向上、テスタビリティ向上
-  - 実装内容:
-    - `src/chat/history.py` - load_chat_history() などの共通関数
-    - `src/chat/checkpoint.py` - LangGraphチェックポイント機構の共通化
-    - `src/chat/handlers.py` - エラーハンドリングなどの共通処理
-    - `src/chat/models.py` - モデル初期化の共通処理
-    - 各アプリファイルから共通コードを呼び出すようにリファクタリング
-  - 影響範囲: すべてのアプリファイル、import文の追加が必要
-  - 見積もり: 2-3時間
-  - 依存: LangGraphチェックポイント機構導入後に実施（Phase 2と組み合わせ推奨）
-  - メモ: 学習用コードとしてのバランスを考慮（過度に抽象化しない）
 
 
 - [ ] GitHub CLI (gh) の認証方法の見直し
