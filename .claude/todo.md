@@ -41,24 +41,18 @@
 
 ### 品質向上・開発環境改善
 
-- [ ] Static type check (型チェック) の導入
+- [x] Static type check (型チェック) の導入
   - 目的: 型エラーを事前に検出し、コードの安全性を向上（特に複雑な実装前に導入推奨）
-  - 検討ツール:
-    - **mypy**: 最もポピュラーな型チェッカー、厳格なチェック
-    - **pyright**: Microsoft製、高速、VS Code統合が優れている
-    - **pytype**: Google製、型ヒント不要でも推論可能
+  - 決定: **Pyright** を採用し、`typeCheckingMode = "standard"` をデフォルト設定にする
   - 実装内容:
-    1. ツール選定（mypyまたはpyright推奨）
-    2. `uv add --dev mypy` または `uv add --dev pyright`
-    3. pyproject.tomlに設定を追加
-    4. 既存コードに型ヒントを追加（段階的に）
-    5. DevContainerに型チェッカー拡張機能を追加（VS Code）
-  - 運用ルール案:
-    - コミット前に `uv run mypy .` または `uv run pyright` を実行
-    - Ruffと同様に手動実行（将来的にGitHub Actionsで自動化）
-  - 影響範囲: pyproject.toml、全てのPythonファイル、.devcontainer/devcontainer.json
-  - 見積もり: 1-2時間
-  - メモ: Ruffと組み合わせることで、コード品質が大幅に向上。複雑な実装（チェックポイント機構など）の前に導入すると効果的
+    1. `uv add --dev pyright` → `dev` グループに追加済み
+    2. `pyproject.toml` の `[tool.pyright]` を作成（`include = ["apps"]`, `reportMissingTypeStubs = false`）
+    3. `apps/` 配下のChainlit/LangGraph実装をPyright対応（Unknown回避のために `cast`/`assert`/ガードを追加）
+    4. DevContainer で `libatomic1` をインストール（Pyright依存のnodeenv動作用）
+  - 運用ルール:
+    - コミット前に `uv run pyright` を実行（Ruffと同列の手動チェック）
+    - 将来的にGitHub Actionsへ統合する余地あり
+  - 参考PR: #10 (Setup Pyright and resolve type warnings)
 
 - [ ] 日本語IME入力対応 Phase 1: 暫定対応（Qiita回避策）
   - 問題: 日本語変換確定のEnterでメッセージが送信されてしまう

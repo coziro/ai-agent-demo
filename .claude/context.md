@@ -2,7 +2,7 @@
 
 このファイルには、**今現在進行中の作業**を記録します。VS Codeを再起動したりコンテナをrebuildした後でも、ここを見れば作業を再開できます。
 
-**最終更新:** 2025-11-02（langgraph_sync.pyリファクタリング完了を追加）
+**最終更新:** 2025-11-03（Pyright導入と型チェック修正の記録を追加）
 
 ---
 
@@ -60,6 +60,21 @@
 ---
 
 ## 最近完了したタスク
+
+### Pyright導入と型チェック修正 - 2025-11-03
+
+**完了内容:**
+- `pyproject.toml` に `[tool.pyright]` を追加し、`typeCheckingMode = "standard"` を基準に設定
+- `uv.lock` を更新し、DevContainerで必要な `libatomic1` を追加インストール
+- Chainlit/LangGraph の各アプリで `cast` / `assert` / ガードを追加してPyrightエラーを解消
+- `uv run pyright` を標準のローカル検証ステップに組み込み
+- PR [#10](https://github.com/coziro/ai-agent-demo/pull/10) を作成・マージ
+
+**フォローアップ:**
+- Pyright をCIに組み込む (GitHub Actions) - 未着手
+- `.claude/settings.local.json` の取り扱いルールを検討
+
+---
 
 ### ディレクトリ構成の見直し + docker-compose.yml更新 - 2025-11-01
 

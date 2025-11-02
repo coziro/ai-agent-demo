@@ -56,6 +56,36 @@
 
 ## 決定事項の記録
 
+### Pyrightを型チェッカーとして採用し `typeCheckingMode="standard"` を基準に運用 - 2025-11-03
+
+**状況・課題:**
+- LangChain/LangGraph 実装に型チェックを導入して品質を高めたい
+- Chainlit や LangGraph の API は型スタブが十分でなく、どの厳しさで運用するか判断が必要だった
+
+**検討した選択肢:**
+1. `typeCheckingMode="basic"`: 警告は少ないが Unknown が残っても気付きにくい
+2. `typeCheckingMode="standard"`: Unknown を拾いつつ、過度なアノテーションを要求しない
+3. `typeCheckingMode="strict"`: 最も厳格だが `TYPE_CHECKING` ブロックやスタブ整備が必須で初期コストが大きい
+
+**決定内容:**
+- Pyright を採用し、`pyproject.toml` の `[tool.pyright]` で `typeCheckingMode = "standard"` を設定
+- `include = ["apps"]` を対象とし、アプリ実装から段階的に整備
+- `reportMissingTypeStubs = false` にして外部ライブラリの警告ノイズを抑制
+
+**理由:**
+- `standard` により Unknown を早期検出しつつ、可読性を損なわずに実運用できる
+- `cast` / `assert` / ガードで補える範囲が広く、strict より導入障壁が低い
+- 将来的にスタブ整備が進めば strict への移行も視野に入る
+
+**影響範囲:**
+- `pyproject.toml`, `uv.lock`, `.devcontainer/Dockerfile`
+- `apps/langchain_sync.py`, `apps/langchain_streaming.py`, `apps/langgraph_sync.py`, `apps/langgraph_streaming.py`
+- 開発フローに `uv run pyright` 実行を追加
+
+**今後のメモ:**
+- CI（GitHub Actions）への組み込みや、`apps/` 以外のディレクトリへの適用拡大を検討する
+- Chainlit/LangGraph 向けのスタブ作成やユーティリティ化で strict 運用へ徐々に近づける
+
 ### Chainlitフレームワークの採用 - 2025-10-23
 
 **状況・課題:**
@@ -1573,4 +1603,3 @@ command: uv run chainlit run ${CHAINLIT_APP:-apps/langchain_streaming.py} --host
 - この改善パターンを他の3ファイルに適用するかは、必要性が出てから判断
 - まずは `langgraph_sync.py` で効果を確認
 - 効果が高ければ、他のファイルにも適用を検討
-

@@ -16,6 +16,13 @@ This project uses `uv` for Python dependency management:
 
 Dependencies are defined in [pyproject.toml](pyproject.toml) and locked in `uv.lock`.
 
+## Static Type Checking
+
+- This project uses **Pyright** with `typeCheckingMode = "standard"` (see `[tool.pyright]` in [pyproject.toml](pyproject.toml#L22)).
+- Run checks locally with `uv run pyright`. Execute this command before committing (similar to Ruff).
+- Pyright currently targets the `apps/` directory. Expand coverage or tighten strictness incrementally as type hints improve.
+- DevContainer installs `libatomic1` to support Pyright’s `nodeenv` dependency; no extra setup is required inside the container.
+
 ## Running Code
 
 - **Run Chainlit apps**: This project provides multiple implementations:
