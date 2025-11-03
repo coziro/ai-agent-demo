@@ -1,43 +1,34 @@
-from typing import cast
-
 import chainlit as cl
-from langchain.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage
+from langchain.messages import AIMessage
 
-from ai_agent_demo.simple_chat import ChatState, create_agent
+from ai_agent_demo.simple_chat import SimpleChatAgent, SimpleChatState
 
-SYSTEM_PROMPT = "You are a helpful assistant."
-CHAT_HISTORY_KEY = "chat_history_key"
-agent = create_agent()
+AGENT_KEY = "agent_key"
 
 
-def load_chat_history() -> list[AnyMessage]:
-    """Load the chat history from the user session, seeding with the system prompt if absent.
-
-    Returns:
-        list[AnyMessage]: The conversation history stored in the Chainlit user session.
-    """
-    chat_history = cl.user_session.get(CHAT_HISTORY_KEY)
-    if chat_history is None:
-        chat_history = [SystemMessage(SYSTEM_PROMPT)]
-        cl.user_session.set(CHAT_HISTORY_KEY, chat_history)
-    return cast(list[AnyMessage], chat_history)
+def load_agent() -> SimpleChatAgent:
+    agent = cl.user_session.get(AGENT_KEY)
+    if agent is None:
+        agent = SimpleChatAgent()
+        cl.user_session.set(AGENT_KEY, agent)
+    return agent
 
 
 @cl.on_chat_start
 async def on_chat_start() -> None:
-    load_chat_history()
+    load_agent()
 
 
 @cl.on_message
 async def on_message(user_request: cl.Message) -> None:
     try:
-        chat_history = load_chat_history()
-        chat_history.append(HumanMessage(user_request.content))
+        agent = load_agent()
+        input_state = SimpleChatState(user_request=user_request.content)
 
-        current_state = ChatState(messages=chat_history)
         reply_message = cl.Message(content="")
-        async for message, _ in agent.astream(
-            current_state,
+        async for message, _ in agent.graph.astream(
+            input_state,
+            config=agent.config,
             stream_mode="messages",
         ):
             if not isinstance(message, AIMessage):
@@ -47,7 +38,6 @@ async def on_message(user_request: cl.Message) -> None:
             if isinstance(message_content, str) and message_content:
                 await reply_message.stream_token(message_content)
 
-        chat_history.append(AIMessage(reply_message.content))
         await reply_message.send()
 
     except Exception as e:
