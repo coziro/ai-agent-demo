@@ -50,6 +50,7 @@ env/
 # Claude Code context
 # Public knowledge base files are committed, personal notes are excluded
 .claude/personal.md
+.claude/settings.local.json
 
 # Jupyter Notebook
 .ipynb_checkpoints

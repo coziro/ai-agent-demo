@@ -44,7 +44,16 @@ To run the application:
    docker-compose up
    ```
 
-4. **Open your browser**
+4. **Install development dependencies** (first time only)
+
+   In another terminal, run:
+   ```bash
+   docker-compose exec app uv pip install -e .
+   ```
+
+   This enables the app to use shared code from the `src/` directory.
+
+5. **Open your browser**
    - Visit http://localhost:8000
 
 **To switch apps:**
@@ -125,6 +134,13 @@ ai-agent-demo/
 │   ├── langgraph_sync.py        # LangGraph + Sync (graph-based agent)
 │   ├── langgraph_streaming.py   # LangGraph + Streaming (graph-based + real-time)
 │   └── README.md                # Detailed comparison of implementations
+├── src/                    # Shared code library
+│   └── ai_agent_demo/      # Main package
+│       └── simple_chat/    # Simple chat agent implementation
+│           ├── __init__.py # Package exports
+│           ├── state.py    # ChatState definition
+│           ├── node.py     # call_llm node function
+│           └── agent.py    # create_agent graph factory
 ├── notebooks/              # Jupyter notebooks for experimentation
 ├── chainlit.md             # Chainlit welcome screen
 ├── docker-compose.yml      # Docker Compose configuration

@@ -45,3 +45,4 @@ async def on_message(request_message: cl.Message) -> None:
 
     except Exception as e:
         await cl.ErrorMessage(content=repr(e)).send()
+        raise e
