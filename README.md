@@ -134,6 +134,13 @@ ai-agent-demo/
 │   ├── langgraph_sync.py        # LangGraph + Sync (graph-based agent)
 │   ├── langgraph_streaming.py   # LangGraph + Streaming (graph-based + real-time)
 │   └── README.md                # Detailed comparison of implementations
+├── src/                    # Shared code library
+│   └── ai_agent_demo/      # Main package
+│       └── simple_chat/    # Simple chat agent implementation
+│           ├── __init__.py # Package exports
+│           ├── state.py    # ChatState definition
+│           ├── node.py     # call_llm node function
+│           └── agent.py    # create_agent graph factory
 ├── notebooks/              # Jupyter notebooks for experimentation
 ├── chainlit.md             # Chainlit welcome screen
 ├── docker-compose.yml      # Docker Compose configuration

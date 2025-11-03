@@ -71,6 +71,8 @@ See [.claude/decisions.md](.claude/decisions.md) for the rationale behind this n
   - [apps/langgraph_sync.py](apps/langgraph_sync.py) - LangGraph + Sync
   - [apps/langgraph_streaming.py](apps/langgraph_streaming.py) - LangGraph + Streaming
   - [apps/README.md](apps/README.md) - Detailed comparison of implementations
+- **Shared code library**: [src/ai_agent_demo/](src/ai_agent_demo/) - Reusable agent implementations
+  - [src/ai_agent_demo/simple_chat/](src/ai_agent_demo/simple_chat/) - Simple chat agent (state, nodes, graph)
 - **Chainlit configuration**: [.chainlit/](.chainlit/) - Chainlit settings and translations
 - **Claude Code context**: [.claude/](.claude/) - Project context, decisions, and session notes for Claude Code
 
