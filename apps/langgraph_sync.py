@@ -2,13 +2,13 @@ from typing import cast
 
 import chainlit as cl
 from langchain.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage
-from langgraph.graph import END, START, StateGraph
 
-from ai_agent_demo.node import call_llm
+from ai_agent_demo.agent import create_agent
 from ai_agent_demo.state import ChatState
 
 SYSTEM_PROMPT = "You are a helpful assistant."
 CHAT_HISTORY_KEY = "chat_history_key"
+agent = create_agent()
 
 
 def load_chat_history() -> list[AnyMessage]:
@@ -22,13 +22,6 @@ def load_chat_history() -> list[AnyMessage]:
         chat_history = [SystemMessage(SYSTEM_PROMPT)]
         cl.user_session.set(CHAT_HISTORY_KEY, chat_history)
     return cast(list[AnyMessage], chat_history)
-
-
-graph = StateGraph(ChatState)
-graph.add_node(call_llm)
-graph.add_edge(START, call_llm.__name__)
-graph.add_edge(call_llm.__name__, END)
-agent = graph.compile()
 
 
 @cl.on_chat_start
