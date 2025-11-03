@@ -1,15 +1,13 @@
-from typing import TypedDict, cast
+from typing import cast
 
 import chainlit as cl
 from langchain.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
-from langgraph.graph import END, START, StateGraph
+
+from ai_agent_demo.simple_chat import ChatState, create_agent
 
 SYSTEM_PROMPT = "You are a helpful assistant."
-
-model = ChatOpenAI(model="gpt-5-nano", streaming=True)
-
 CHAT_HISTORY_KEY = "chat_history_key"
+agent = create_agent()
 
 
 def load_chat_history() -> list[AnyMessage]:
@@ -25,37 +23,21 @@ def load_chat_history() -> list[AnyMessage]:
     return cast(list[AnyMessage], chat_history)
 
 
-class ChatState(TypedDict):
-    messages: list[AnyMessage]
-
-
-async def call_llm(state: ChatState) -> ChatState:
-    chat_history = state["messages"]
-    response = await model.ainvoke(chat_history)
-    return {"messages": [response]}
-
-
-graph = StateGraph(ChatState)
-graph.add_node(call_llm)
-graph.add_edge(START, "call_llm")
-graph.add_edge("call_llm", END)
-agent = graph.compile()
-
-
 @cl.on_chat_start
 async def on_chat_start() -> None:
     load_chat_history()
 
 
 @cl.on_message
-async def on_message(request_message: cl.Message) -> None:
+async def on_message(user_request: cl.Message) -> None:
     try:
         chat_history = load_chat_history()
-        chat_history.append(HumanMessage(request_message.content))
+        chat_history.append(HumanMessage(user_request.content))
 
+        current_state = ChatState(messages=chat_history)
         reply_message = cl.Message(content="")
         async for message, _ in agent.astream(
-            {"messages": chat_history},
+            current_state,
             stream_mode="messages",
         ):
             if not isinstance(message, AIMessage):
@@ -70,3 +52,4 @@ async def on_message(request_message: cl.Message) -> None:
 
     except Exception as e:
         await cl.ErrorMessage(content=repr(e)).send()
+        raise e
