@@ -25,7 +25,96 @@
 
 ### 進行中のタスク
 
-現在進行中のタスクはありません。
+#### 共通コードの分離（LangGraph対象） - 開始日: 2025-11-03
+
+**目的:**
+- LangGraphの2つの実装（langgraph_sync.py、langgraph_streaming.py）から重複コードを抽出
+- `src/ai_agent_demo/` ディレクトリに共通モジュールを作成
+- DRY原則、再利用性、テスタビリティの向上
+
+**ブランチ:** `feature/extract-langgraph-common-code`
+
+**ディレクトリ構成（計画）:**
+```
+src/
+├── ai_agent_demo/
+│   ├── __init__.py
+│   ├── config.py          # SYSTEM_PROMPT, DEFAULT_MODEL
+│   ├── state.py           # ChatState定義
+│   ├── nodes/
+│   │   ├── __init__.py
+│   │   └── llm.py         # call_llm() ノード関数
+│   └── graph.py           # create_chat_graph()
+apps/
+├── langchain_sync.py      # 対象外（LangChainは現状維持）
+├── langchain_streaming.py # 対象外
+├── langgraph_sync.py      # リファクタリング対象
+└── langgraph_streaming.py # リファクタリング対象
+```
+
+**完了した項目:**
+- [x] ブランチ作成: `feature/extract-langgraph-common-code`
+- [x] ディレクトリ構成の議論・決定
+  - `src/ai_agent_demo/` を採用（プロジェクト名と一致）
+  - ノードは `nodes/` ディレクトリ化（近い将来の拡張を見越して）
+- [x] `src/ai_agent_demo/state.py` に `ChatState` を移動
+- [x] `apps/langgraph_sync.py` から `ChatState` のインポート成功
+- [x] 開発モードインストールの設定完了
+  - `uv pip install -e .` で動作確認
+  - `pyproject.toml` に `[build-system]` と `[tool.hatch.build.targets.wheel]` を追加
+  - `devcontainer.json` に `postCreateCommand` を追加
+  - `README.md` に docker-compose 用の手順を追記
+- [x] Chainlitアプリの動作確認成功
+- [x] DevContainerリビルド後の動作確認（1回目）
+  - `uv pip install -e .` の自動実行を確認
+  - 開発モードインストール成功
+- [x] uv警告の対処（UV_LINK_MODE=copy）
+  - DevContainer環境でのハードリンク警告に対応
+  - `devcontainer.json` に `containerEnv.UV_LINK_MODE=copy` を追加
+  - 次回リビルド時から警告が抑制される
+
+**次にやること:**
+1. DevContainer リビルド（devcontainer.json の変更を反映）
+2. 他の共通コードの移行:
+   - `config.py` - SYSTEM_PROMPT, DEFAULT_MODEL
+   - `nodes/llm.py` - call_llm() ノード関数
+   - `graph.py` - create_chat_graph() グラフ構築ロジック
+3. `apps/langgraph_streaming.py` のリファクタリング
+4. 動作確認（両方のアプリが正しく動作するか）
+5. Ruff + Pyright チェック
+6. Pull Request 作成
+
+**技術的な学び:**
+- **Hatchling**: uvのデフォルトビルドバックエンド、`src/` レイアウトを自動認識
+- **開発モードインストール**: `uv pip install -e .` で編集可能モードに
+- **インポートパス**: `from ai_agent_demo.state import ChatState`（`src.` プレフィックス不要）
+- **DevContainer設定**: `postCreateCommand` で自動セットアップ
+- **YAGNI vs 計画**: 数日以内の拡張予定がある場合、最初からディレクトリ化が合理的
+- **UV_LINK_MODE**: DevContainer環境ではハードリンクが使えないことが多い
+  - 異なるファイルシステム間（キャッシュ↔プロジェクト）での制限
+  - `UV_LINK_MODE=copy` で警告を抑制可能
+  - パフォーマンス低下は数十ms程度で実用上問題なし
+
+**設計判断:**
+- LangChainは対象外: 現状でも十分シンプル、LangGraphと構造が異なる
+- ディレクトリ名: `ai_agent_demo`（リポジトリ名と一致、混同を避ける）
+- シンプルさ優先: DevContainerは自動化、docker-composeは手動手順（README記載）
+
+**関連ファイル:**
+- [src/ai_agent_demo/state.py](../src/ai_agent_demo/state.py) - ChatState定義（新規作成）
+- [apps/langgraph_sync.py](../apps/langgraph_sync.py) - リファクタリング対象
+- [apps/langgraph_streaming.py](../apps/langgraph_streaming.py) - リファクタリング対象
+- [pyproject.toml](../pyproject.toml) - build-system設定追加
+- [.devcontainer/devcontainer.json](../.devcontainer/devcontainer.json) - postCreateCommand追加
+- [README.md](../README.md) - docker-compose手順追記
+
+**ブロッカー:**
+- なし（順調に進行中）
+
+**メモ:**
+- DevContainerリビルド後、`uv pip install -e .` が自動実行されることを確認する
+- ChatState定義の統一（TypedDict vs Pydantic BaseModel）は実装しながら決定
+- グラフ構築の共通化レベルも実装しながら決定
 
 ---
 

@@ -4,6 +4,9 @@
     "dockerfile": "Dockerfile",
     "context": ".."
   },
+  "containerEnv": {
+    "UV_LINK_MODE": "copy"
+  },
   "customizations": {
     "vscode": {
       "extensions": [
@@ -15,5 +18,6 @@
         "yzhang.markdown-all-in-one"
       ]
     }
-  }
+  },
+  "postCreateCommand": "uv sync && uv pip install -e ."
 }

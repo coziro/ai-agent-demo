@@ -44,7 +44,16 @@ To run the application:
    docker-compose up
    ```
 
-4. **Open your browser**
+4. **Install development dependencies** (first time only)
+
+   In another terminal, run:
+   ```bash
+   docker-compose exec app uv pip install -e .
+   ```
+
+   This enables the app to use shared code from the `src/` directory.
+
+5. **Open your browser**
    - Visit http://localhost:8000
 
 **To switch apps:**

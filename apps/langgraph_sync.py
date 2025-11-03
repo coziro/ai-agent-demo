@@ -6,6 +6,8 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
 
+from ai_agent_demo.state import ChatState
+
 SYSTEM_PROMPT = "You are a helpful assistant."
 
 model = ChatOpenAI(model="gpt-5-nano")
@@ -26,27 +28,27 @@ def load_chat_history() -> list[AnyMessage]:
     return cast(list[AnyMessage], chat_history)
 
 
-class ChatState(BaseModel):
-    """State schema for the chat agent graph.
+# class ChatState(BaseModel):
+#     """State schema for the chat agent graph.
 
-    This class defines the structure of the state that flows through the
-    LangGraph nodes. It uses Pydantic BaseModel for runtime validation
-    and type safety.
+#     This class defines the structure of the state that flows through the
+#     LangGraph nodes. It uses Pydantic BaseModel for runtime validation
+#     and type safety.
 
-    Class Variables:
-        MESSAGES: Field name constant for the messages field. Used to ensure
-            consistency when accessing or updating the state.
+#     Class Variables:
+#         MESSAGES: Field name constant for the messages field. Used to ensure
+#             consistency when accessing or updating the state.
 
-    Attributes:
-        messages: List of conversation messages including system prompts,
-            user inputs, and AI responses.
-    """
+#     Attributes:
+#         messages: List of conversation messages including system prompts,
+#             user inputs, and AI responses.
+#     """
 
-    # Field name
-    MESSAGES: ClassVar[str] = "messages"
+#     # Field name
+#     MESSAGES: ClassVar[str] = "messages"
 
-    # State Field
-    messages: list[AnyMessage]
+#     # State Field
+#     messages: list[AnyMessage]
 
 
 async def call_llm(state: ChatState) -> dict:
