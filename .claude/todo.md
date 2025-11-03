@@ -132,37 +132,52 @@
 
 ## 優先度: 低 (Low Priority)
 
-- [ ] ノードのクラスベース実装への移行（将来の拡張性向上）
-  - 目的: 複数ノード実装時の可読性・保守性・拡張性を向上させる
+- [ ] Agentクラスパターンへの移行（将来の拡張性向上）
+  - 目的: モデル設定の依存性注入、sync/streaming対応の統一、テスタビリティ向上
   - 背景:
-    - 現在は1ノードのみで関数ベース実装（`call_llm.__name__`を使用）
-    - 複数ノードになった場合、クラスベースの方が管理しやすい
-    - ノード名とロジックをカプセル化し、Single Source of Truthを実現
-  - 実装内容（Option 2: クラス変数 + staticmethod）:
+    - 現在はノード関数内でmodelをインスタンス化（暫定対応）
+    - sync版とstreaming版でmodel設定が異なる（`streaming=True`の有無）
+    - プロフェッショナルなLangGraphプロジェクトで広く使われるパターン
+  - 実装内容（Agentクラスパターン - HelpDeskAgent参考）:
     ```python
-    class Node(ABC):
-        name: str
-        @staticmethod
-        @abstractmethod
-        async def execute(state: ChatState) -> ChatState:
-            pass
+    # src/ai_agent_demo/agent.py
+    class SimpleChatAgent:
+        def __init__(self, model: ChatOpenAI):
+            self.model = model  # ← 依存性注入
 
-    class CallLLMNode(Node):
-        name = "call_llm"
-        @staticmethod
-        async def execute(state: ChatState) -> ChatState:
-            ...
+        async def call_llm(self, state: ChatState) -> dict:
+            response = await self.model.ainvoke(state.messages)
+            return {ChatState.MESSAGES: [response]}
 
-    graph.add_node(CallLLMNode.name, CallLLMNode.execute)
+        def create_graph(self):
+            graph = StateGraph(ChatState)
+            graph.add_node("call_llm", self.call_llm)
+            graph.add_edge(START, "call_llm")
+            graph.add_edge("call_llm", END)
+            return graph.compile()
+
+    # apps/langgraph_sync.py
+    model = ChatOpenAI(model="gpt-5-nano")
+    agent = SimpleChatAgent(model=model).create_graph()
+
+    # apps/langgraph_streaming.py
+    model = ChatOpenAI(model="gpt-5-nano", streaming=True)
+    agent = SimpleChatAgent(model=model).create_graph()
     ```
-  - 設計判断が必要な項目:
-    - インスタンスメソッド vs staticmethod
-    - `register()`メソッドの導入（ファクトリーパターン）
-    - 抽象基底クラスの設計
-  - 影響範囲: LangGraphの2ファイル（[apps/langgraph_sync.py](../apps/langgraph_sync.py), [apps/langgraph_streaming.py](../apps/langgraph_streaming.py)）
-  - 前提条件: 複数ノードの実装が必要になってから検討
-  - 見積もり: 2-3時間（設計検討 + 実装 + テスト）
-  - メモ: 2025-11-02に優先度低に移動。現状は`call_llm.__name__`で十分だが、将来的にはクラスベースが有力
+  - メリット:
+    - ✅ model設定（sync/streaming）を自然に扱える
+    - ✅ ノード関数が self.model にアクセス可能
+    - ✅ テストしやすい（モックを注入）
+    - ✅ 複数ノード間で状態を共有可能
+    - ✅ グラフ構築ロジックも共通化できる
+  - 影響範囲:
+    - 新規: `src/ai_agent_demo/agent.py`
+    - 変更: [apps/langgraph_sync.py](../apps/langgraph_sync.py), [apps/langgraph_streaming.py](../apps/langgraph_streaming.py)
+    - 削除: `src/ai_agent_demo/node/` ディレクトリ（不要になる）
+  - 前提条件: 現在の共通コード分離タスクが完了後
+  - 見積もり: 2-3時間（設計 + 実装 + 動作確認 + テスト）
+  - 参考実装: https://github.com/masamasa59/genai-agent-advanced-book/blob/main/chapter4/src/agent.py
+  - メモ: 2025-11-03に内容更新。現在は関数内model作成で暫定対応中、将来的にはこのパターンへ移行推奨
 
 - [ ] リトライ機能の追加（with_retry()）
   - 目的: 一時的なネットワークエラーやレート制限に自動対応
@@ -219,11 +234,45 @@
 
 ## アイデア・検討中 (Ideas / Backlog)
 
+### 新しいエージェントパターンの実装
+
+- [ ] メール作成エージェントの実装
+  - 目的: State管理の学習、複数フィールドを持つStateの実践的な使い方を習得
+  - 背景:
+    - 現在のシンプルチャットは `messages` フィールドのみ
+    - より複雑なStateを扱う練習として最適
+    - シンプルながら実用的なユースケース
+  - 実装内容:
+    ```python
+    class EmailState(TypedDict):
+        messages: list[AnyMessage]  # 会話履歴
+        email_subject: str          # メールタイトル
+        email_body: str             # メール本文
+        status: str                 # "drafting" | "reviewing" | "completed"
+    ```
+  - ワークフロー案:
+    1. ユーザーとの対話を通じて要件をヒアリング
+    2. メールタイトルと本文を段階的に作成・更新
+    3. ユーザーにレビューを依頼、フィードバックを反映
+    4. 最終的なメールを完成させる
+  - 技術的な学び:
+    - 複数フィールドを持つStateの設計
+    - State更新の部分的な上書き vs 完全な置き換え
+    - 条件分岐（status による処理の切り替え）
+    - ユーザーフィードバックループの実装
+  - 実装ファイル:
+    - `apps/email_agent_sync.py` - まずsync版で実装
+    - `apps/email_agent_streaming.py` - 動作確認後にstreaming版
+    - `src/ai_agent_demo/state/email.py` - EmailState定義
+  - 見積もり: 3-4時間
+  - 前提条件: 現在の共通コード分離タスクが完了後
+  - メモ: 2025-11-03追加。複雑すぎず、Stateの使い方を学ぶのに最適な題材
+
 ### LangGraph機能拡張（まだアイデア段階）
 
 これらのタスクは、現状のシンプルな1ノード実装から複数ノードへの拡張アイデアです。まだ具体的な要求がないため、アイデアセクションに配置しています。
 
-- [ ] LangGraph複数ノードの実装
+- [ ] LangGraph複数ノードの実装（汎用的なパターン）
   - 目的: より複雑なワークフローの実現（research → analysis → generation など）
   - 前提: 現状は1ノードのシンプルな実装のみ。複数ノードが必要になるユースケースが出てから検討
   - 実装内容:
@@ -231,7 +280,7 @@
     - ノード間の状態遷移・データフロー
     - 条件分岐やループなどの制御構造
   - 見積もり: 3-4時間
-  - メモ: 具体的なユースケース（例: RAG、エージェント）が決まってから実装
+  - メモ: 具体的なユースケース（例: RAG、エージェント）が決まってから実装。メール作成エージェントで基礎を学んだ後に検討
 
 - [ ] LangGraph進捗表示の実装
   - 目的: 複数ノードの処理状況をリアルタイムで可視化
