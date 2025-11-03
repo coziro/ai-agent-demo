@@ -25,7 +25,74 @@
 
 ### 進行中のタスク
 
-現在進行中のタスクはありません。
+#### LangGraphチェックポイント機構の検討・導入（実験中） - 開始日: 2025-11-03
+
+**目的:**
+- 会話履歴の永続化をChainlitのセッション管理から切り離す
+- LangGraph標準のチェックポイント機構に移行
+- UIフレームワークからの独立性を高める
+
+**現在の状態:**
+- ✅ 実験用ファイル `apps/langgraph_sync2.py` を作成
+- ✅ `InMemorySaver`を使った基本的なチェックポイント機構が動作確認済み
+- ✅ Pydantic BaseModel + Optional[list] パターンで実装
+- ✅ 部分的なState更新（`user_request`のみ渡す）が正しく動作
+- ⏳ 潜在的な問題点の検証が必要（以下の5点）
+
+**検証が必要な潜在的問題点:**
+
+1. **SystemMessageが設定されていない（優先度：高）**
+   - 場所: [apps/langgraph_sync2.py:37-38](../apps/langgraph_sync2.py#L37-L38)
+   - 問題: 初回会話時にSystemMessageがない状態でLLMが呼ばれる
+   - 影響: AIの振る舞いが不安定になる可能性
+   - 確認方法: 初回メッセージでAIの応答が期待通りか確認
+   - 修正案: `state.chat_history = [SystemMessage(SYSTEM_PROMPT)]` または `on_chat_start`で初期化
+
+2. **thread_idが全ユーザー共有（優先度：高）**
+   - 場所: [apps/langgraph_sync2.py:67](../apps/langgraph_sync2.py#L67)
+   - 問題: `thread_id = "1"` 固定のため、複数ユーザーで履歴が混ざる
+   - 影響: テスト環境では問題ないが、本番環境では致命的
+   - 確認方法: 複数ブラウザで同時にアクセスして履歴が混ざるか確認
+   - 修正案: `thread_id = cl.user_session.get("id")` でセッションIDを使用
+
+3. **`load_chat_history()`関数が未使用（優先度：中）**
+   - 場所: [apps/langgraph_sync2.py:12-22, 60](../apps/langgraph_sync2.py#L12-L22)
+   - 問題: 定義されているが使われていない（旧実装の名残？）
+   - 影響: コードの冗長性、メンテナンス性
+   - 確認方法: この関数を削除しても動作に影響がないか確認
+   - 修正案: 不要なら削除、または `on_chat_start` で初期化に使用
+
+4. **Pydantic BaseModelとチェックポイントの相性（優先度：高）**
+   - 場所: [apps/langgraph_sync2.py:28-31](../apps/langgraph_sync2.py#L28-L31)
+   - 問題: `chat_history: list | None = None` のデフォルト値がチェックポイント復元を妨げる可能性
+   - 影響: 2回目以降の会話で履歴が失われる可能性（要検証）
+   - 確認方法: 2回目以降のメッセージで過去の会話を覚えているか確認（例：「私の名前は太郎です」→「私の名前は？」）
+   - 代替案: TypedDict を使用（既存の `src/ai_agent_demo/simple_chat/state.py` と同様）
+
+5. **`user_request`フィールドの冗長性（優先度：低）**
+   - 場所: [apps/langgraph_sync2.py:30](../apps/langgraph_sync2.py#L30)
+   - 問題: `user_request`はすでに`HumanMessage`として`chat_history`に含まれている
+   - 影響: Stateの冗長性、チェックポイントに不要なデータを保存
+   - 確認方法: 設計レビュー
+   - 代替案: `user_request`フィールドを削除し、messagesのみで管理
+
+**次にやること:**
+1. 上記5点の問題を1つずつ検証
+2. 問題があれば修正、なければそのまま
+3. 検証完了後、本番用の実装方針を決定（Pydantic vs TypedDict）
+4. `apps/langgraph_sync.py` への適用を検討
+
+**ブランチ:** `feature/langgraph-checkpoint`
+
+**関連ファイル:**
+- [apps/langgraph_sync2.py](../apps/langgraph_sync2.py) - 実験用実装
+- [src/ai_agent_demo/simple_chat/state.py](../src/ai_agent_demo/simple_chat/state.py) - 既存のTypedDict実装
+- [.claude/todo.md](todo.md#L48-L67) - タスクの詳細説明
+
+**メモ:**
+- チェックポイント機構の基本動作は確認できた（部分的State更新が正しく動く）
+- Pydantic BaseModel を使った実装は動作しているが、TypedDict との比較検討が必要
+- 本実装前に上記5点の問題を解決する必要がある
 
 ---
 
