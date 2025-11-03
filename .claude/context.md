@@ -2,7 +2,7 @@
 
 このファイルには、**今現在進行中の作業**を記録します。VS Codeを再起動したりコンテナをrebuildした後でも、ここを見れば作業を再開できます。
 
-**最終更新:** 2025-11-02（IME Phase 1完了の記録を追加）
+**最終更新:** 2025-11-03（共通コード分離タスクの進捗更新）
 
 ---
 
@@ -56,65 +56,64 @@ apps/
 - [x] ブランチ作成: `feature/extract-langgraph-common-code`
 - [x] ディレクトリ構成の議論・決定
   - `src/ai_agent_demo/` を採用（プロジェクト名と一致）
-  - ノードは `nodes/` ディレクトリ化（近い将来の拡張を見越して）
-- [x] `src/ai_agent_demo/state.py` に `ChatState` を移動
-- [x] `apps/langgraph_sync.py` から `ChatState` のインポート成功
+  - ノードは `node/` ディレクトリ化（単数形）
+- [x] `src/ai_agent_demo/state/` に `ChatState` を移動
 - [x] 開発モードインストールの設定完了
   - `uv pip install -e .` で動作確認
   - `pyproject.toml` に `[build-system]` と `[tool.hatch.build.targets.wheel]` を追加
   - `devcontainer.json` に `postCreateCommand` を追加
   - `README.md` に docker-compose 用の手順を追記
-- [x] Chainlitアプリの動作確認成功
-- [x] DevContainerリビルド後の動作確認（1回目）
+- [x] DevContainerリビルド後の動作確認
   - `uv pip install -e .` の自動実行を確認
-  - 開発モードインストール成功
-- [x] uv警告の対処（UV_LINK_MODE=copy）
-  - DevContainer環境でのハードリンク警告に対応
-  - `devcontainer.json` に `containerEnv.UV_LINK_MODE=copy` を追加
-  - 次回リビルド時から警告が抑制される
+  - UV_LINK_MODE=copy で警告が抑制されることを確認
+- [x] `src/ai_agent_demo/node/` に `call_llm()` ノード関数を作成
+  - **重要な発見:** `streaming=True` で統一することで両バージョン対応可能！
+  - sync版: `streaming=True` + `ainvoke()` でも問題なく動作（コールバックは無視される）
+  - streaming版: LangGraphがコールバック経由でトークンをキャプチャ
+  - 両バージョンで同じノード関数を使える（DRY達成）
+- [x] `apps/langgraph_sync.py` のリファクタリング完了
+  - 共通の `call_llm` ノード関数を使用
+  - 不要なコード（model定義、ChatState定義、call_llm定義）を削除
+  - 動作確認済み
 
 **次にやること:**
-1. DevContainer リビルド（devcontainer.json の変更を反映）
-2. 他の共通コードの移行:
-   - `config.py` - SYSTEM_PROMPT, DEFAULT_MODEL
-   - `nodes/llm.py` - call_llm() ノード関数
-   - `graph.py` - create_chat_graph() グラフ構築ロジック
-3. `apps/langgraph_streaming.py` のリファクタリング
-4. 動作確認（両方のアプリが正しく動作するか）
-5. Ruff + Pyright チェック
-6. Pull Request 作成
+1. `apps/langgraph_streaming.py` のリファクタリング ← 現在ここ
+2. 動作確認（両方のLangGraphアプリ）
+3. Ruff + Pyright チェック
+4. Pull Request 作成
 
 **技術的な学び:**
 - **Hatchling**: uvのデフォルトビルドバックエンド、`src/` レイアウトを自動認識
 - **開発モードインストール**: `uv pip install -e .` で編集可能モードに
 - **インポートパス**: `from ai_agent_demo.state import ChatState`（`src.` プレフィックス不要）
 - **DevContainer設定**: `postCreateCommand` で自動セットアップ
-- **YAGNI vs 計画**: 数日以内の拡張予定がある場合、最初からディレクトリ化が合理的
 - **UV_LINK_MODE**: DevContainer環境ではハードリンクが使えないことが多い
-  - 異なるファイルシステム間（キャッシュ↔プロジェクト）での制限
   - `UV_LINK_MODE=copy` で警告を抑制可能
-  - パフォーマンス低下は数十ms程度で実用上問題なし
+- **streaming=True の互換性（重要な発見）:**
+  - `ChatOpenAI(streaming=True)` + `ainvoke()` はsync版でも動作
+  - sync版: コールバックが発火するが無視される（問題なし）
+  - streaming版: LangGraphがコールバック経由でトークンをキャプチャ
+  - 両バージョンで同じノード関数を使える（DRY原則達成）
+  - パフォーマンス影響: コールバックのオーバーヘッドは微小で実用上問題なし
 
 **設計判断:**
 - LangChainは対象外: 現状でも十分シンプル、LangGraphと構造が異なる
 - ディレクトリ名: `ai_agent_demo`（リポジトリ名と一致、混同を避ける）
-- シンプルさ優先: DevContainerは自動化、docker-composeは手動手順（README記載）
+- ノード関数の共通化: `streaming=True` で統一（両バージョン対応）
+- config.py/graph.py は共通化しない: シンプルさ優先、過度な抽象化を避ける
+- 将来的にはAgentクラスパターンへの移行を検討（todo.md参照）
 
 **関連ファイル:**
-- [src/ai_agent_demo/state.py](../src/ai_agent_demo/state.py) - ChatState定義（新規作成）
-- [apps/langgraph_sync.py](../apps/langgraph_sync.py) - リファクタリング対象
-- [apps/langgraph_streaming.py](../apps/langgraph_streaming.py) - リファクタリング対象
-- [pyproject.toml](../pyproject.toml) - build-system設定追加
-- [.devcontainer/devcontainer.json](../.devcontainer/devcontainer.json) - postCreateCommand追加
-- [README.md](../README.md) - docker-compose手順追記
+- [src/ai_agent_demo/state/](../src/ai_agent_demo/state/) - ChatState定義
+- [src/ai_agent_demo/node/](../src/ai_agent_demo/node/) - call_llm ノード関数
+- [apps/langgraph_sync.py](../apps/langgraph_sync.py) - リファクタリング完了
+- [apps/langgraph_streaming.py](../apps/langgraph_streaming.py) - リファクタリング対象（次のステップ）
+- [pyproject.toml](../pyproject.toml) - build-system設定
+- [.devcontainer/devcontainer.json](../.devcontainer/devcontainer.json) - postCreateCommand設定
+- [README.md](../README.md) - docker-compose開発手順
 
 **ブロッカー:**
 - なし（順調に進行中）
-
-**メモ:**
-- DevContainerリビルド後、`uv pip install -e .` が自動実行されることを確認する
-- ChatState定義の統一（TypedDict vs Pydantic BaseModel）は実装しながら決定
-- グラフ構築の共通化レベルも実装しながら決定
 
 ---
 

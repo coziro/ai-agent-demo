@@ -1717,3 +1717,91 @@ command: uv run chainlit run ${CHAINLIT_APP:-apps/langchain_streaming.py} --host
 - custom_jsアプローチを簡潔に説明
 - Classi技術ブログと本プロジェクトのime-investigation.mdを紹介
 - 他の言語（中国語・韓国語）でも同じアプローチが有効であることを示す
+
+---
+
+### streaming=True でsync/streaming両バージョン対応 - 2025-11-03
+
+**状況・課題:**
+- LangGraphのsync版とstreaming版で異なるmodel設定が必要
+  - sync版: `ChatOpenAI(model="gpt-5-nano", streaming=False)` （デフォルト）
+  - streaming版: `ChatOpenAI(model="gpt-5-nano", streaming=True)` （必須）
+- ノード関数を共通化したいが、model設定が異なるため難しい
+- 選択肢: ①共通化を諦める ②modelを引数で渡す ③Agentクラスパターン ④streaming=Trueで統一
+
+**検討した選択肢:**
+1. **共通化を諦める**: 各アプリに`call_llm`を直接書く
+   - メリット: シンプル
+   - デメリット: DRY違反（10行程度の重複）
+
+2. **modelを引数で渡す**: `call_llm(state, model)`
+   - メリット: DRY原則を守る
+   - デメリット: lambdaが必要、`call_llm.__name__`が使えない
+
+3. **Agentクラスパターン**: 依存性注入
+   - メリット: エレガント、テストしやすい
+   - デメリット: 複雑、将来のタスクとして検討
+
+4. **streaming=Trueで統一**: 両バージョンで同じmodel設定
+   - メリット: シンプルでDRYも達成
+   - 懸念: sync版で問題が起きないか？
+
+**決定内容:**
+**選択肢4を採用**: `ChatOpenAI(streaming=True)` で統一し、両バージョンで使用
+
+```python
+# src/ai_agent_demo/node/simple_chat.py
+async def call_llm(state: ChatState) -> dict:
+    model = ChatOpenAI(model="gpt-5-nano", streaming=True)  # ← 常にTrue
+    response = await model.ainvoke(state.messages)
+    return {ChatState.MESSAGES: [response]}
+```
+
+**理由:**
+1. **実験により安全性を確認**
+   - sync版（`ainvoke()`）でも `streaming=True` で問題なく動作
+   - コールバックは発火するが、誰も聞いていないため無視される
+   - パフォーマンス影響は微小（コールバックのオーバーヘッドのみ）
+
+2. **LangGraphの仕組み**
+   - streaming版: `agent.astream(stream_mode="messages")` でLangGraphがコールバックをキャプチャ
+   - sync版: `agent.ainvoke()` ではコールバックをキャプチャしない（無視される）
+
+3. **DRY原則の達成**
+   - 両バージョンで同じノード関数を使える
+   - 過度な抽象化を避けつつ、コード重複を解消
+
+4. **将来の拡張性**
+   - 後でAgentクラスパターンに移行しやすい
+   - シンプルな実装から始めて、必要に応じて洗練
+
+**影響範囲:**
+- `src/ai_agent_demo/node/simple_chat.py` - call_llm実装
+- `apps/langgraph_sync.py` - sync版アプリ
+- `apps/langgraph_streaming.py` - streaming版アプリ
+
+**トレードオフ:**
+- ✅ シンプルさとDRYの両立
+- ✅ 実用上問題ないパフォーマンス
+- ⚠️ sync版で不要なコールバック処理が発生（微小なオーバーヘッド）
+- ⚠️ 意図が分かりにくい可能性（コメントで補足）
+
+**検証方法:**
+1. sync版で動作確認: `uv run chainlit run apps/langgraph_sync.py`
+2. streaming版で動作確認: `uv run chainlit run apps/langgraph_streaming.py`
+3. 両方で正常動作を確認
+
+**学び:**
+- `streaming=True` は「ストリーミング可能にする」フラグであり、必ずストリーミングするわけではない
+- LangGraphのコールバック機構は柔軟で、聞き手がいない場合は無視される
+- 実際に試してみることの重要性（当初は不安だったが、動作確認で安全性を確認）
+- シンプルな解決策が最良であることが多い
+
+**今後の展望:**
+- 将来的にはAgentクラスパターンへの移行を検討（todo.md参照）
+- 複数ノードを扱う場合は、より洗練されたアーキテクチャが必要になる可能性
+- 現時点ではこのシンプルなアプローチで十分
+
+**参考:**
+- [.claude/context.md](context.md) - 技術的な学びセクション
+- [.claude/todo.md](todo.md) - Agentクラスパターンへの移行タスク
