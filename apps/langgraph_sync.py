@@ -3,8 +3,7 @@ from typing import cast
 import chainlit as cl
 from langchain.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage
 
-from ai_agent_demo.agent import create_agent
-from ai_agent_demo.state import ChatState
+from ai_agent_demo.simple_chat import ChatState, create_agent
 
 SYSTEM_PROMPT = "You are a helpful assistant."
 CHAT_HISTORY_KEY = "chat_history_key"

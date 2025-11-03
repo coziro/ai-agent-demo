@@ -1,7 +1,7 @@
 from langgraph.graph import END, START, StateGraph
 
-from ai_agent_demo.node import call_llm
-from ai_agent_demo.state import ChatState
+from .node import call_llm
+from .state import ChatState
 
 
 def create_agent():

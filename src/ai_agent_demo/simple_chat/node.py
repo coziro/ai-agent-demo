@@ -1,6 +1,6 @@
 from langchain_openai import ChatOpenAI
 
-from ..state import ChatState
+from .state import ChatState
 
 
 async def call_llm(state: ChatState) -> dict:
