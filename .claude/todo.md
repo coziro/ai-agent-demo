@@ -41,18 +41,7 @@
 
 ### 品質向上・開発環境改善
 
-- [ ] 共通コードの分離（src/ディレクトリの導入）
-  - 目的: DRY原則、コードの再利用性向上、テスタビリティ向上
-  - 背景: langgraph_sync.pyとlanggraph_streaming.pyで既にコード重複が発生している
-  - 実装内容:
-    - `src/chat/history.py` - load_chat_history() などの共通関数
-    - `src/chat/checkpoint.py` - LangGraphチェックポイント機構の共通化（将来対応）
-    - `src/chat/handlers.py` - エラーハンドリングなどの共通処理
-    - `src/chat/models.py` - モデル初期化の共通処理
-    - 各アプリファイルから共通コードを呼び出すようにリファクタリング
-  - 影響範囲: すべてのアプリファイル、import文の追加が必要
-  - 見積もり: 2-3時間
-  - メモ: 学習用コードとしてのバランスを考慮（過度に抽象化しない）
+現在優先度高のタスクはありません。
 
 ### 機能拡張
 
@@ -332,6 +321,35 @@
 ---
 
 ## 完了 (Completed)
+
+### 2025-11-03
+
+- [x] 共通コードの分離（LangGraph対象）
+  - 目的: DRY原則、コードの再利用性向上、テスタビリティ向上
+  - 完了内容:
+    - `src/ai_agent_demo/simple_chat/` ディレクトリ作成（エージェント名優先）
+    - `ChatState`, `call_llm`, `create_agent` を共通モジュールとして抽出
+    - `apps/langgraph_sync.py` リファクタリング（-26行）
+    - `apps/langgraph_streaming.py` リファクタリング（-26行）
+    - ディレクトリ構成を機能別からエージェント別に変更
+    - ドキュメント更新（README.md, CLAUDE.md, context.md）
+  - 重要な発見:
+    - `ChatOpenAI(streaming=True)` はsync/streaming両方で動作
+    - sync版: コールバック発火するが無視される（問題なし）
+    - streaming版: LangGraphがコールバック経由でトークンキャプチャ
+    - 両バージョンで同じノード関数を使用可能
+  - 設計判断:
+    - load_chat_history(), エラーハンドリング, モデル初期化は共通化しない
+    - YAGNI原則: 過度な抽象化を避け、必要になってから対応
+    - チェックポイント機構導入後に再検討
+  - 成果:
+    - コード削減: 合計52行削減
+    - DRY原則達成: 重複コード完全排除
+    - 高い凝集度: エージェント単位でコード集約
+    - 将来の拡張性: 新しいエージェント追加が容易
+  - 影響範囲: 19ファイル変更（+389行/-119行）
+  - Pull Request: #12（feature/extract-langgraph-common-code）
+  - 参考: [.claude/decisions.md](decisions.md#ディレクトリ構成-エージェント名優先---2025-11-03)
 
 ### 2025-11-02
 

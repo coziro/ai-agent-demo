@@ -2,7 +2,7 @@
 
 このファイルには、**今現在進行中の作業**を記録します。VS Codeを再起動したりコンテナをrebuildした後でも、ここを見れば作業を再開できます。
 
-**最終更新:** 2025-11-03（共通コード分離タスクの進捗更新）
+**最終更新:** 2025-11-03（共通コード分離タスク完了）
 
 ---
 
@@ -25,7 +25,13 @@
 
 ### 進行中のタスク
 
-#### 共通コードの分離（LangGraph対象） - 開始日: 2025-11-03
+現在進行中のタスクはありません。
+
+---
+
+## 最近完了したタスク
+
+### 共通コードの分離（LangGraph対象） - 完了日: 2025-11-03
 
 **目的:**
 - LangGraphの2つの実装（langgraph_sync.py、langgraph_streaming.py）から重複コードを抽出
@@ -54,33 +60,23 @@ apps/
 
 **完了した項目:**
 - [x] ブランチ作成: `feature/extract-langgraph-common-code`
-- [x] ディレクトリ構成の議論・決定
-  - `src/ai_agent_demo/` を採用（プロジェクト名と一致）
-  - ノードは `node/` ディレクトリ化（単数形）
-- [x] `src/ai_agent_demo/state/` に `ChatState` を移動
+- [x] ディレクトリ構成の見直し・決定
+  - `src/ai_agent_demo/simple_chat/` を採用（エージェント名優先）
+  - 機能別（state/, node/, agent/）からエージェント別に変更
 - [x] 開発モードインストールの設定完了
   - `uv pip install -e .` で動作確認
   - `pyproject.toml` に `[build-system]` と `[tool.hatch.build.targets.wheel]` を追加
   - `devcontainer.json` に `postCreateCommand` を追加
-  - `README.md` に docker-compose 用の手順を追記
-- [x] DevContainerリビルド後の動作確認
-  - `uv pip install -e .` の自動実行を確認
-  - UV_LINK_MODE=copy で警告が抑制されることを確認
-- [x] `src/ai_agent_demo/node/` に `call_llm()` ノード関数を作成
-  - **重要な発見:** `streaming=True` で統一することで両バージョン対応可能！
-  - sync版: `streaming=True` + `ainvoke()` でも問題なく動作（コールバックは無視される）
-  - streaming版: LangGraphがコールバック経由でトークンをキャプチャ
-  - 両バージョンで同じノード関数を使える（DRY達成）
-- [x] `apps/langgraph_sync.py` のリファクタリング完了
-  - 共通の `call_llm` ノード関数を使用
-  - 不要なコード（model定義、ChatState定義、call_llm定義）を削除
-  - 動作確認済み
-
-**次にやること:**
-1. `apps/langgraph_streaming.py` のリファクタリング ← 現在ここ
-2. 動作確認（両方のLangGraphアプリ）
-3. Ruff + Pyright チェック
-4. Pull Request 作成
+- [x] 共通コードの抽出
+  - `ChatState` - エージェントの状態定義
+  - `call_llm` - LLM呼び出しノード関数（`streaming=True`で両対応）
+  - `create_agent` - グラフ構築ファクトリ関数
+- [x] `apps/langgraph_sync.py` のリファクタリング完了（-26行）
+- [x] `apps/langgraph_streaming.py` のリファクタリング完了（-26行）
+- [x] ディレクトリ構成の再編成（エージェント名優先）
+- [x] ドキュメント更新（README.md, CLAUDE.md, context.md）
+- [x] Ruff + Pyright チェック完了（0エラー）
+- [x] Pull Request #12 作成・マージ完了
 
 **技術的な学び:**
 - **Hatchling**: uvのデフォルトビルドバックエンド、`src/` レイアウトを自動認識
@@ -98,21 +94,32 @@ apps/
 
 **設計判断:**
 - LangChainは対象外: 現状でも十分シンプル、LangGraphと構造が異なる
-- ディレクトリ名: `ai_agent_demo`（リポジトリ名と一致、混同を避ける）
+- ディレクトリ構成: エージェント名優先（`simple_chat/`配下にstate, node, agentを集約）
 - ノード関数の共通化: `streaming=True` で統一（両バージョン対応）
-- config.py/graph.py は共通化しない: シンプルさ優先、過度な抽象化を避ける
+- 過度な抽象化を避ける: load_chat_history, エラーハンドリングは各アプリに残す
+  - load_chat_history: Chainlit依存、チェックポイント機構導入後に再検討
+  - エラーハンドリング: 各アプリ3-4行程度、共通化不要
 - 将来的にはAgentクラスパターンへの移行を検討（todo.md参照）
 
-**関連ファイル:**
-- [src/ai_agent_demo/simple_chat/](../src/ai_agent_demo/simple_chat/) - Simple chat agent（state, node, agent）
-- [apps/langgraph_sync.py](../apps/langgraph_sync.py) - リファクタリング完了
-- [apps/langgraph_streaming.py](../apps/langgraph_streaming.py) - リファクタリング完了
-- [pyproject.toml](../pyproject.toml) - build-system設定
-- [.devcontainer/devcontainer.json](../.devcontainer/devcontainer.json) - postCreateCommand設定
-- [README.md](../README.md) - docker-compose開発手順
+**最終的なディレクトリ構成:**
+```
+src/ai_agent_demo/simple_chat/
+├── __init__.py    # ChatState, call_llm, create_agentをエクスポート
+├── state.py       # ChatState定義
+├── node.py        # call_llm ノード関数
+└── agent.py       # create_agent グラフファクトリ
+```
 
-**ブロッカー:**
-- なし（順調に進行中）
+**成果:**
+- コード削減: 合計52行削減（各アプリ26行×2）
+- DRY原則達成: 重複コードの完全排除
+- 高い凝集度: エージェント単位でコードが集約
+- 将来の拡張性: 新しいエージェントの追加が容易
+
+**Pull Request:**
+- #12 "Extract LangGraph common code and reorganize by agent"
+- マージ済み（2025-11-03）
+- 8コミット、19ファイル変更（+389行/-119行）
 
 ---
 

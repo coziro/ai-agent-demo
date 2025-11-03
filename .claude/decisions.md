@@ -1805,3 +1805,116 @@ async def call_llm(state: ChatState) -> dict:
 **参考:**
 - [.claude/context.md](context.md) - 技術的な学びセクション
 - [.claude/todo.md](todo.md) - Agentクラスパターンへの移行タスク
+
+---
+
+### ディレクトリ構成: エージェント名優先 - 2025-11-03
+
+**状況・課題:**
+- `src/ai_agent_demo/` 配下のディレクトリ構成をどうするか
+- 当初は機能別（`state/`, `node/`, `agent/`）で実装していた
+- 将来的に複数のエージェントを実装する予定
+
+**検討した選択肢:**
+1. **機能別（当初の設計）:**
+   ```
+   src/ai_agent_demo/
+   ├── state/
+   │   └── simple_chat.py
+   ├── node/
+   │   └── simple_chat.py
+   └── agent/
+       └── simple_chat.py
+   ```
+2. **エージェント名優先（採用）:**
+   ```
+   src/ai_agent_demo/
+   └── simple_chat/
+       ├── state.py
+       ├── node.py
+       └── agent.py
+   ```
+
+**決定内容:**
+- **エージェント名を最上位**に配置する構成を採用
+
+**理由:**
+1. **高い凝集度**: 1つのエージェントに関連するコード（state, node, agent）が1箇所にまとまる
+2. **削除が容易**: エージェント単位でディレクトリごと削除できる
+3. **依存関係が明確**: エージェント間の依存が見えやすい
+4. **理解しやすい**: 「このエージェントは何をするのか」という単位で把握できる
+5. **スケーラブル**: 新しいエージェントを追加する際、単に新しいディレクトリを作るだけ
+
+**トレードオフ:**
+- 共通コードの扱いが課題になる可能性があるが、現時点では `simple_chat` 専用で問題なし
+- 将来的に共通コードが必要になったら `common/` ディレクトリを追加すれば良い（YAGNI原則）
+
+**影響範囲:**
+- [src/ai_agent_demo/simple_chat/](../src/ai_agent_demo/simple_chat/) - 新しいディレクトリ構成
+- [apps/langgraph_sync.py](../apps/langgraph_sync.py) - インポートパス変更
+- [apps/langgraph_streaming.py](../apps/langgraph_streaming.py) - インポートパス変更
+
+**関連決定:**
+- [共通コードの分離範囲](#共通コードの分離範囲--2025-11-03)（下記）
+
+---
+
+### 共通コードの分離範囲 - 2025-11-03
+
+**状況・課題:**
+- todo.mdでは `load_chat_history()`, エラーハンドリング, モデル初期化の共通化も計画していた
+- どこまで共通化すべきか？
+
+**検討した選択肢:**
+1. **todo.mdの計画通り完全実装:**
+   - `src/chat/history.py` - load_chat_history()
+   - `src/chat/handlers.py` - エラーハンドリング
+   - `src/chat/models.py` - モデル初期化
+2. **コアのみ共通化（採用）:**
+   - ChatState, call_llm, create_agent のみ
+3. **すべて共通化しない:**
+   - 各アプリで独自実装を維持
+
+**決定内容:**
+- **LangGraphのコア部分のみを共通化**し、以下は意図的に見送る：
+  - `load_chat_history()` - 各アプリに残す
+  - エラーハンドリング - 各アプリに残す
+  - モデル初期化 - `call_llm` 内で実装（暫定）
+
+**理由:**
+
+**共通化したもの（必要性が高い）:**
+- ✅ **ChatState**: LangGraphの中核、完全に共通
+- ✅ **call_llm**: ビジネスロジック、`streaming=True`で両対応可能
+- ✅ **create_agent**: グラフ構築ロジック、完全に共通
+
+**共通化しなかったもの（YAGNI原則）:**
+- ❌ **load_chat_history()**:
+  - Chainlit依存が強い（`cl.user_session`）
+  - チェックポイント機構導入後に不要になる可能性が高い
+  - 各アプリで10行程度、過度な抽象化を避ける
+- ❌ **エラーハンドリング**:
+  - 各アプリで3-4行程度（`try-except-raise`）
+  - 共通化しても削減効果が少ない
+  - アプリ固有のエラー処理が必要になる可能性
+- ❌ **モデル初期化**:
+  - Agentクラスパターン導入時に対応予定（優先度低）
+  - 現在は `call_llm` 内で実装（暫定対応）
+
+**影響範囲:**
+- [src/ai_agent_demo/simple_chat/](../src/ai_agent_demo/simple_chat/) - 共通化されたコード
+- [apps/langgraph_sync.py](../apps/langgraph_sync.py) - Chainlit依存部分は残る
+- [apps/langgraph_streaming.py](../apps/langgraph_streaming.py) - Chainlit依存部分は残る
+
+**成果:**
+- コード削減: 合計52行削減（各アプリ26行×2）
+- DRY原則: 重複コードの完全排除
+- シンプルさ維持: 学習用コードとして適切なバランス
+
+**将来の対応:**
+- チェックポイント機構導入後に `load_chat_history()` を再検討
+- Agentクラスパターン導入時にモデル初期化を対応
+
+**参考:**
+- Pull Request #12: "Extract LangGraph common code and reorganize by agent"
+- [.claude/todo.md](todo.md) - LangGraphチェックポイント機構、Agentクラスパターン
