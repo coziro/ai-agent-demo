@@ -104,10 +104,9 @@ apps/
 - 将来的にはAgentクラスパターンへの移行を検討（todo.md参照）
 
 **関連ファイル:**
-- [src/ai_agent_demo/state/](../src/ai_agent_demo/state/) - ChatState定義
-- [src/ai_agent_demo/node/](../src/ai_agent_demo/node/) - call_llm ノード関数
+- [src/ai_agent_demo/simple_chat/](../src/ai_agent_demo/simple_chat/) - Simple chat agent（state, node, agent）
 - [apps/langgraph_sync.py](../apps/langgraph_sync.py) - リファクタリング完了
-- [apps/langgraph_streaming.py](../apps/langgraph_streaming.py) - リファクタリング対象（次のステップ）
+- [apps/langgraph_streaming.py](../apps/langgraph_streaming.py) - リファクタリング完了
 - [pyproject.toml](../pyproject.toml) - build-system設定
 - [.devcontainer/devcontainer.json](../.devcontainer/devcontainer.json) - postCreateCommand設定
 - [README.md](../README.md) - docker-compose開発手順
