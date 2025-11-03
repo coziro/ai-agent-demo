@@ -7,6 +7,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
 from .state import SimpleChatState
 
@@ -39,12 +40,12 @@ class SimpleChatAgent:
             streaming: Enable token streaming (default: True)
             system_prompt: System message for the agent (default: helpful assistant)
         """
-        self.system_prompt = system_prompt
+        self.system_prompt: str = system_prompt
         self.config = RunnableConfig(configurable={"thread_id": str(uuid.uuid4())})
         self.model = ChatOpenAI(model=model_name, streaming=streaming)
-        self.graph = self._build_graph()
+        self.graph: CompiledStateGraph = self._build_graph()
 
-    def _build_graph(self):
+    def _build_graph(self) -> CompiledStateGraph:
         """Construct and compile the LangGraph with checkpoint support.
 
         Returns:
