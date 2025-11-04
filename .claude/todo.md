@@ -195,6 +195,51 @@
 
 これらのタスクは、現状のシンプルな1ノード実装から複数ノードへの拡張アイデアです。まだ具体的な要求がないため、アイデアセクションに配置しています。
 
+- [ ] LangGraph Checkpoint + Token-level Streamingの両立（技術的課題）
+  - 目的: チェックポイント機構を使いながらトークン単位のストリーミングを実現する
+  - 背景:
+    - PR #13で `langgraph_sync.py` はcheckpoint版に移行完了
+    - `langgraph_streaming.py` は旧実装を埋め込んで対応（2実装並存状態）
+    - 理想は1つの実装でcheckpoint + streamingの両立
+  - 現在の問題点:
+    - `stream_mode="messages"` + checkpoint + `config` parameter → **全履歴をemitしてしまう**
+    - 理由: LangGraphがcheckpointから復元した履歴もすべてストリームに流す
+    - 結果: 過去のメッセージが毎回画面に表示される（ユーザー体験が悪い）
+  - 検証済みの事実:
+    - 旧実装（checkpointなし）: `agent.astream()` は新規メッセージのみemit → 正常動作
+    - 新実装（checkpoint + config）: `agent.graph.astream()` は全メッセージemit → バグ発生
+    - checkpoint復元の有無が `config` parameter の存在で決まる
+  - 考えられる解決策（未検証）:
+    1. **メッセージ数カウント方式**:
+       - 事前に `agent.graph.get_state(config)` で現在の履歴件数を取得
+       - ストリーミング中、履歴件数以降のメッセージのみ表示
+       - 課題: 状態取得のオーバーヘッド、複雑な実装
+    2. **タイムスタンプ/ID方式**:
+       - 各メッセージにタイムスタンプやIDを付与
+       - ストリーミング開始前のメッセージをフィルタリング
+       - 課題: メッセージ構造の拡張が必要、LangGraph標準から逸脱
+    3. **stream_mode="updates" 使用**:
+       - ノード単位の更新のみ取得、トークンレベルではない
+       - 課題: トークン単位のストリーミングができない（意味がない）
+    4. **カスタムストリーミングロジック**:
+       - LangGraphの内部実装を深く理解し、独自のフィルタリング実装
+       - 課題: 複雑すぎる、メンテナンス困難、LangGraphアップデートで壊れる可能性
+  - 現在の暫定対応（PR #13で実装済み）:
+    - `langgraph_sync.py`: Checkpoint使用、トークンストリーミングなし
+    - `langgraph_streaming.py`: 旧実装埋め込み（stateless agent）、トークンストリーミングあり
+    - 理由: 実装のシンプルさと動作の確実性を優先
+  - 実装優先度: 低（現状の2実装並存で実用上問題なし）
+  - 再検討のタイミング:
+    - LangGraph公式で解決策が提示された場合
+    - 複雑な実装を許容できる明確なビジネス要求がある場合
+    - コミュニティで標準的なパターンが確立された場合
+  - 見積もり: 未定（解決策次第で4-8時間、または実現不可能）
+  - 参考:
+    - [apps/langgraph_streaming.py](../apps/langgraph_streaming.py) - 現在の暫定実装
+    - [.claude/context.md](context.md) - 問題発覚と対応の経緯
+    - [.claude/decisions.md](decisions.md) - ストリーミングとの両立を断念した設計判断
+  - メモ: この問題はLangGraphの設計上の制約である可能性が高い。無理に解決しようとすると複雑性が増すだけかもしれない。
+
 - [ ] LangGraph複数ノードの実装（汎用的なパターン）
   - 目的: より複雑なワークフローの実現（research → analysis → generation など）
   - 前提: 現状は1ノードのシンプルな実装のみ。複数ノードが必要になるユースケースが出てから検討
