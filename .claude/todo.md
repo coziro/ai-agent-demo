@@ -45,26 +45,7 @@
 
 ### 機能拡張
 
-- [ ] LangGraphチェックポイント機構の検討・導入
-  - 目的: Chainlitセッションに依存せずに会話履歴を永続化し、LangGraph内で状態を復元できるようにする
-  - 背景:
-    - Chainlit依存度を下げ、他のUI（Streamlit、Jupyter Notebook、独自フロントエンド）への移行を容易にする
-    - ChainlitはあくまでUIの一つという位置付けにする
-    - 現在のメッセージ履歴管理をChainlitセッションから脱却させる
-  - 前提条件: 共通コードの分離が完了していること
-  - 参考: LangGraphのcheckpointドキュメント、現在の[apps/langgraph_sync.py](../apps/langgraph_sync.py)実装
-  - 実装内容:
-    - チェックポイントストア（ローカルファイルまたはインメモリ）を設定
-    - `agent.ainvoke` 呼び出し時にcheckpointを活用する形へ変更
-    - Chainlitセッションとの役割分担を再検討し、どちらを正本にするか整理
-    - 共通化された `src/chat/checkpoint.py` に実装
-  - 影響範囲: LangGraphの2ファイルのみ（[apps/langgraph_sync.py](../apps/langgraph_sync.py), [apps/langgraph_streaming.py](../apps/langgraph_streaming.py)）
-  - 実装アプローチ（段階的）:
-    1. まず[apps/langgraph_sync.py](../apps/langgraph_sync.py)で試す（検証・動作確認）
-    2. 次に[apps/langgraph_streaming.py](../apps/langgraph_streaming.py)に適用
-    3. `src/chat/checkpoint.py` で共通化
-  - 見積もり: 2-3時間（Phase 1のみ）、追加1-2時間（Phase 2 + 共通化）
-  - メモ: UI非依存なアーキテクチャへの移行の第一歩。LangChainの2ファイルには影響しない
+現在優先度高の機能拡張タスクはありません。
 
 ---
 
@@ -120,53 +101,6 @@
 ---
 
 ## 優先度: 低 (Low Priority)
-
-- [ ] Agentクラスパターンへの移行（将来の拡張性向上）
-  - 目的: モデル設定の依存性注入、sync/streaming対応の統一、テスタビリティ向上
-  - 背景:
-    - 現在はノード関数内でmodelをインスタンス化（暫定対応）
-    - sync版とstreaming版でmodel設定が異なる（`streaming=True`の有無）
-    - プロフェッショナルなLangGraphプロジェクトで広く使われるパターン
-  - 実装内容（Agentクラスパターン - HelpDeskAgent参考）:
-    ```python
-    # src/ai_agent_demo/agent.py
-    class SimpleChatAgent:
-        def __init__(self, model: ChatOpenAI):
-            self.model = model  # ← 依存性注入
-
-        async def call_llm(self, state: ChatState) -> dict:
-            response = await self.model.ainvoke(state.messages)
-            return {ChatState.MESSAGES: [response]}
-
-        def create_graph(self):
-            graph = StateGraph(ChatState)
-            graph.add_node("call_llm", self.call_llm)
-            graph.add_edge(START, "call_llm")
-            graph.add_edge("call_llm", END)
-            return graph.compile()
-
-    # apps/langgraph_sync.py
-    model = ChatOpenAI(model="gpt-5-nano")
-    agent = SimpleChatAgent(model=model).create_graph()
-
-    # apps/langgraph_streaming.py
-    model = ChatOpenAI(model="gpt-5-nano", streaming=True)
-    agent = SimpleChatAgent(model=model).create_graph()
-    ```
-  - メリット:
-    - ✅ model設定（sync/streaming）を自然に扱える
-    - ✅ ノード関数が self.model にアクセス可能
-    - ✅ テストしやすい（モックを注入）
-    - ✅ 複数ノード間で状態を共有可能
-    - ✅ グラフ構築ロジックも共通化できる
-  - 影響範囲:
-    - 新規: `src/ai_agent_demo/agent.py`
-    - 変更: [apps/langgraph_sync.py](../apps/langgraph_sync.py), [apps/langgraph_streaming.py](../apps/langgraph_streaming.py)
-    - 削除: `src/ai_agent_demo/node/` ディレクトリ（不要になる）
-  - 前提条件: 現在の共通コード分離タスクが完了後
-  - 見積もり: 2-3時間（設計 + 実装 + 動作確認 + テスト）
-  - 参考実装: https://github.com/masamasa59/genai-agent-advanced-book/blob/main/chapter4/src/agent.py
-  - メモ: 2025-11-03に内容更新。現在は関数内model作成で暫定対応中、将来的にはこのパターンへ移行推奨
 
 - [ ] リトライ機能の追加（with_retry()）
   - 目的: 一時的なネットワークエラーやレート制限に自動対応
@@ -323,6 +257,32 @@
 ## 完了 (Completed)
 
 ### 2025-11-03
+
+- [x] LangGraphチェックポイント機構の導入（Agent class pattern）
+  - 目的: Chainlitセッション管理から脱却し、LangGraph標準のチェックポイント機構に移行
+  - 完了内容:
+    - InMemorySaverによる会話履歴の永続化
+    - Agent class pattern (SimpleChatAgent) の導入
+    - Pydantic BaseModelベースのSimpleChatState実装
+    - SYSTEM_PROMPTのパラメータ化（依存性注入）
+    - グラフ構築の分離（_build_graph メソッド）
+    - UUID-based thread_id によるスレッド分離
+    - apps/langgraph_sync.pyをcheckpoint版に置き換え
+    - apps/langgraph_streaming.pyは旧実装維持（トークンストリーミング対応）
+    - 旧simple_chatパッケージの削除と新実装への置き換え
+  - 設計決定:
+    - Pydantic BaseModel採用（TypedDictより型安全性が高い）
+    - user_requestフィールド保持（UI層のシンプル化優先）
+    - ストリーミングとの両立を断念（2実装並存）
+    - 型ヒントのバランス（有用な箇所のみ追加、冗長性回避）
+  - 技術的な学び:
+    - LangGraph + Checkpoint + Streamingの制約（stream_mode="messages"は全履歴emit）
+    - Pydantic BaseModelとCheckpointの相性は良好
+    - UUID-based thread_idで複数ユーザー対応
+  - 成果: コード削減-143行（10ファイル変更、+157/-300）
+  - 影響範囲: apps/langgraph_sync.py, apps/langgraph_streaming.py, src/ai_agent_demo/simple_chat/
+  - Pull Request: #13（feature/langgraph-checkpoint、マージ済み）
+  - 参考: [.claude/context.md](context.md), [.claude/decisions.md](decisions.md)
 
 - [x] 共通コードの分離（LangGraph対象）
   - 目的: DRY原則、コードの再利用性向上、テスタビリティ向上

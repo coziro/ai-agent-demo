@@ -56,6 +56,101 @@
 
 ## 決定事項の記録
 
+### LangGraph Checkpoint機構とAgent Class Patternの採用 - 2025-11-03
+
+**状況・課題:**
+- 会話履歴の管理をChainlitのセッション機能に依存していた
+- UI層（Chainlit）とビジネスロジック層（LangGraph）の責務が混在
+- 他のUI（Streamlit、Jupyter、独自フロントエンド）への移行が困難
+- ノード関数内でmodelをインスタンス化していた（テストしにくい、設定の柔軟性が低い）
+
+**検討した選択肢:**
+
+**1. 状態管理の方式:**
+- 選択肢A: Chainlitセッション継続（現状維持）
+  - メリット: 実装が簡単
+  - デメリット: UI依存度が高い、他のUIに移行困難
+- 選択肢B: LangGraph Checkpoint機構（InMemorySaver）
+  - メリット: UI非依存、LangGraph標準機能、状態管理の一元化
+  - デメリット: 実装がやや複雑、ストリーミングとの相性問題
+- 選択肢C: 外部データベース（PostgreSQL、Redis）
+  - メリット: 永続化、スケーラブル
+  - デメリット: 複雑すぎる、デモには過剰
+
+**2. State定義:**
+- 選択肢A: TypedDict（既存実装）
+  - メリット: シンプル、LangGraph公式ドキュメントでよく使用
+  - デメリット: 実行時バリデーションなし、型安全性が弱い
+- 選択肢B: Pydantic BaseModel
+  - メリット: 実行時バリデーション、型安全性、チェックポイントと互換性良好
+  - デメリット: やや複雑
+
+**3. アーキテクチャパターン:**
+- 選択肢A: 関数ベース（既存実装）
+  - メリット: シンプル
+  - デメリット: 依存性注入困難、テストしにくい
+- 選択肢B: Agent Class Pattern
+  - メリット: 依存性注入、テスタビリティ、プロフェッショナルな実装パターン
+  - デメリット: やや複雑
+
+**決定内容:**
+1. **LangGraph Checkpoint機構（InMemorySaver）を採用**
+   - `RunnableConfig(configurable={"thread_id": str(uuid.uuid4())})` でスレッド分離
+   - 各ユーザーセッションごとに独立したthread_id
+
+2. **Pydantic BaseModelをState定義に採用**
+   - 実行時バリデーション、型安全性の向上
+   - チェックポイント機構との互換性確認済み
+
+3. **Agent Class Patternを採用**
+   - `SimpleChatAgent`クラスでmodel、graph、configをカプセル化
+   - コンストラクタで依存性注入（system_prompt、model_name、streaming）
+
+4. **ストリーミングとの両立を断念**
+   - `langgraph_sync.py`: Checkpoint使用、ストリーミングなし
+   - `langgraph_streaming.py`: 旧実装埋め込み、ストリーミングあり
+   - 理由: `stream_mode="messages"` + checkpointは全履歴をemitしてしまう
+
+5. **user_requestフィールドを保持**
+   - UI層の実装をシンプルに保つため
+   - chat_historyにも含まれるが、冗長性よりシンプルさを優先
+
+**理由:**
+- **UI非依存性**: Chainlit以外のUIへの移行が容易
+- **LangGraph標準機能**: 公式のベストプラクティスに準拠
+- **型安全性**: Pydantic BaseModelによる実行時バリデーション
+- **テスタビリティ**: Agent Class Patternにより依存性注入が可能
+- **スレッド分離**: UUID-based thread_idで複数ユーザー対応
+- **YAGNI原則**: InMemorySaver（外部DBは過剰）
+- **実用性優先**: ストリーミングとの両立より、実装のシンプルさを選択
+
+**影響範囲:**
+- `apps/langgraph_sync.py`: Checkpoint版に完全置き換え
+- `apps/langgraph_streaming.py`: 旧実装を埋め込み（ストリーミング維持）
+- `src/ai_agent_demo/simple_chat/`: Agent class pattern実装
+  - `agent.py`: SimpleChatAgent
+  - `state.py`: SimpleChatState (Pydantic BaseModel)
+  - `node.py`: 削除（Agentクラスのメソッドに統合）
+
+**技術的な学び:**
+- LangGraph + Checkpoint + Streamingの制約
+  - `stream_mode="messages"` with checkpoint → 全履歴emit
+  - トークンレベルストリーミングには stateless agent が必要
+- Pydantic BaseModelとCheckpointの相性は良好
+- UUID-based thread_idで複数ユーザー対応が簡潔に実現
+
+**Trade-offs:**
+- ストリーミング版は旧実装維持（2つの実装が並存）
+- InMemorySaver（再起動で履歴消失） → 将来的にPostgreSQL等へ移行可能
+
+**参考資料:**
+- Pull Request #13: "feat: implement LangGraph checkpoint mechanism with Agent class pattern"
+- [.claude/context.md](context.md) - 実装の詳細と経緯
+- LangGraph公式ドキュメント: Checkpointer機能
+- 参考実装: https://github.com/masamasa59/genai-agent-advanced-book/blob/main/chapter4/src/agent.py
+
+---
+
 ### Pyrightを型チェッカーとして採用し `typeCheckingMode="standard"` を基準に運用 - 2025-11-03
 
 **状況・課題:**
