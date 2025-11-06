@@ -3,6 +3,44 @@
 **調査日**: 2025-11-02
 **対象**: Chainlit 2.8.3におけるIME変換中のEnterキー誤送信問題
 **環境**: Chrome/Safari on macOS
+**最終更新**: 2025-11-06（Chainlit 2.8.4で公式修正完了）
+
+---
+
+## ✅ 解決済み（2025-11-06更新）
+
+**Chainlit 2.8.4で公式修正が入り、この問題は完全に解決しました。**
+
+### 修正内容（PR #2575）
+
+**根本原因**:
+- PR #2393で`contentEditable` → `<textarea>`移行時、`AutoResizeTextarea`コンポーネントが composition events を親コンポーネント（Input.tsx）に伝播していなかった
+- そのため、`Input.tsx`の`isComposing`状態が常に`false`のままだった
+
+**修正方法**:
+- `AutoResizeTextarea`に`onCompositionStart`/`onCompositionEnd`プロパティを追加
+- 子コンポーネントから親コンポーネントへのイベント伝播を実装
+- これにより、`Input.tsx`の`isComposing`状態が正しく更新されるようになった
+
+**検証結果（2025-11-06）**:
+- ✅ Chrome on macOS: IME変換中のEnter → 変換確定（送信されない）
+- ✅ Safari on macOS: IME変換中のEnter → 変換確定（送信されない）
+- ✅ 変換確定後のEnter → メッセージ送信
+- ✅ 英語入力でEnter → メッセージ送信
+- ✅ Shift+Enter → 改行
+
+**結論**:
+- Chainlit 2.8.4以降では、custom.jsによる回避策は不要
+- 公式修正により、Reactコンポーネント階層内で正しく解決された
+- 以前の調査で「Reactの根本的な問題」と判断したのは誤りで、実際は「AutoResizeTextareaの実装バグ」だった
+
+**参考**:
+- [Chainlit PR #2575](https://github.com/Chainlit/chainlit/pull/2575)
+- [Chainlit Release 2.8.4](https://github.com/Chainlit/chainlit/releases/tag/2.8.4)
+
+---
+
+## 以下は2.8.3時点での調査記録（アーカイブ）
 
 ---
 

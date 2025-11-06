@@ -2,7 +2,7 @@
 
 このファイルには、**今現在進行中の作業**を記録します。VS Codeを再起動したりコンテナをrebuildした後でも、ここを見れば作業を再開できます。
 
-**最終更新:** 2025-11-03（共通コード分離タスク完了）
+**最終更新:** 2025-11-06（Chainlit 2.8.4アップグレード完了）
 
 ---
 
@@ -30,6 +30,49 @@
 ---
 
 ## 最近完了したタスク
+
+### Chainlit 2.8.4アップグレード（IME公式修正） - 完了日: 2025-11-06
+
+**目的:**
+- Chainlit 2.8.4の公式IME修正（PR #2575）を検証
+- custom.jsによる回避策が不要になるか確認
+
+**ブランチ:** `feature/upgrade-chainlit-2.8.4`
+
+**完了した項目:**
+- ✅ pyproject.tomlで`chainlit>=2.8.4`に更新
+- ✅ uv syncで依存関係更新
+- ✅ custom.jsを無効化してIME動作テスト
+- ✅ Chrome/Safari on macOSで完全動作確認
+- ✅ custom.js完全削除（公式修正で不要と判明）
+- ✅ ドキュメント更新（ime-investigation.md）
+
+**検証結果:**
+- ✅ IME変換中のEnter → 変換確定（送信されない）
+- ✅ 変換確定後のEnter → メッセージ送信
+- ✅ 英語入力でEnter → メッセージ送信
+- ✅ Shift+Enter → 改行
+
+**技術的な学び:**
+- **根本原因の再評価**: 以前「Reactの根本的な問題」と判断したのは誤りだった
+- **実際の原因**: AutoResizeTextareaが composition events を親に伝播していなかった
+- **修正内容**: イベントハンドラprops追加により、イベント伝播を実装
+- **調査の教訓**: コンポーネント階層全体を調査する重要性、最新PR履歴の確認
+
+**成果:**
+- custom.js削除（56行のJavaScriptコード削除）
+- よりシンプルな構成（公式実装に依存）
+- メンテナンス負担の軽減
+
+**Pull Request:**
+- #14 "feat: Upgrade Chainlit 2.8.3 → 2.8.4 (official IME fix)"（作成予定）
+
+**参考:**
+- [Chainlit PR #2575](https://github.com/Chainlit/chainlit/pull/2575)
+- [Chainlit Release 2.8.4](https://github.com/Chainlit/chainlit/releases/tag/2.8.4)
+- [.claude/ime-investigation.md](ime-investigation.md) - 詳細な調査記録
+
+---
 
 ### LangGraphチェックポイント機構の導入（Agent class pattern） - 完了日: 2025-11-03
 
