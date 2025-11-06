@@ -65,7 +65,7 @@
 - メンテナンス負担の軽減
 
 **Pull Request:**
-- #14 "feat: Upgrade Chainlit 2.8.3 → 2.8.4 (official IME fix)"（作成予定）
+- #14 "feat: Upgrade Chainlit 2.8.3 → 2.8.4 (official IME fix)"（マージ済み）
 
 **参考:**
 - [Chainlit PR #2575](https://github.com/Chainlit/chainlit/pull/2575)

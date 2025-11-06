@@ -135,23 +135,6 @@
   - 依存: デプロイ方法の決定（decisions.md参照）
   - 見積もり: 1時間
 
-- [ ] 日本語IME入力対応: コミュニティへの情報共有（オプション）
-  - 目的: 同じ問題に悩む他のユーザーを助ける
-  - 背景:
-    - Phase 1で custom_js による解決策を確立
-    - Chainlit本体へのPRは現実的でない（React制約、大規模リファクタ必要）
-    - React teamは8年以上修正せず（Issues #8683, #3926）
-  - アクション:
-    - Chainlit Issues #2600と#2598にコメント投稿
-    - custom_jsアプローチとClassi技術ブログへのリンクを共有
-    - ime-investigation.mdの主要な知見を要約
-  - スコープ: 情報共有のみ（PRは作成しない）
-  - 見積もり: 30分
-  - 参考資料:
-    - [.claude/ime-investigation.md](.claude/ime-investigation.md)
-    - Chainlit Issue #2600: https://github.com/Chainlit/chainlit/issues/2600
-    - Chainlit Issue #2598: https://github.com/Chainlit/chainlit/issues/2598
-  - メモ: PRは現実的でないため情報共有に変更（2025-11-02）
 
 ---
 
@@ -300,6 +283,33 @@
 ---
 
 ## 完了 (Completed)
+
+### 2025-11-06
+
+- [x] Chainlit 2.8.4へのアップグレード（IME公式修正）
+  - 目的: Chainlit 2.8.4の公式IME修正（PR #2575）を検証し、custom.jsが不要になるか確認
+  - 完了内容:
+    - pyproject.tomlで`chainlit>=2.8.4`に更新
+    - uv syncで依存関係更新
+    - custom.jsを無効化してIME動作テスト（Chrome/Safari on macOS）
+    - custom.js完全削除（公式修正で不要と判明）
+    - ドキュメント更新（ime-investigation.md, context.md）
+  - 検証結果:
+    - ✅ IME変換中のEnter → 変換確定（送信されない）
+    - ✅ 変換確定後のEnter → メッセージ送信
+    - ✅ 英語入力でEnter → メッセージ送信
+    - ✅ Shift+Enter → 改行
+  - 技術的な学び:
+    - 根本原因: AutoResizeTextareaがcomposition eventsを親に伝播していなかった
+    - 以前「Reactの根本的な問題」と判断したのは誤り
+    - 調査の教訓: コンポーネント階層全体の調査、最新PR履歴の確認の重要性
+  - 成果: custom.js削除（56行）、よりシンプルな構成
+  - 影響範囲: pyproject.toml, uv.lock, public/custom.js（削除）, .chainlit/config.toml, .claude/ime-investigation.md, .claude/context.md
+  - Pull Request: #14（feature/upgrade-chainlit-2.8.4、マージ済み）
+  - 参考:
+    - [Chainlit PR #2575](https://github.com/Chainlit/chainlit/pull/2575)
+    - [Chainlit Release 2.8.4](https://github.com/Chainlit/chainlit/releases/tag/2.8.4)
+    - [.claude/ime-investigation.md](.claude/ime-investigation.md)
 
 ### 2025-11-03
 
