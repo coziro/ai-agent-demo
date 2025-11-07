@@ -1,4 +1,4 @@
-"""Base classes for LangGraph agents."""
+"""Base class for LangGraph agents."""
 
 import uuid
 from abc import ABC, abstractmethod
