@@ -4,6 +4,7 @@ from ai_agent_demo.email_draft import AgentState, EmailDraftAgent
 
 AGENT_KEY = "agent_key"
 
+
 def load_agent() -> EmailDraftAgent:
     agent = cl.user_session.get(AGENT_KEY)
     if agent is None:

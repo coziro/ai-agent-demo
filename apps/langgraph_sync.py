@@ -22,9 +22,7 @@ async def on_chat_start() -> None:
 async def on_message(user_request: cl.Message) -> None:
     try:
         agent = load_agent()
-        input_state = SimpleChatState(
-            user_request=user_request.content
-        )
+        input_state = SimpleChatState(user_request=user_request.content)
         response_dict = await agent.graph.ainvoke(
             input=input_state,
             config=agent.config,
