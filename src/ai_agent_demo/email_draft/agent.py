@@ -15,16 +15,11 @@ DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant."
 
 
 class AgentBase(ABC):
-    def __init__(
-        self,
-        model_name: str = "gpt-5-nano",
-        streaming: bool = True,
-    ):
+    def __init__(self, **model_kwargs):
         # create model
-        self.model = ChatOpenAI(
-            model=model_name,
-            streaming=streaming,
-        )
+        model_kwargs.setdefault("model", "gpt-5-nano")
+        model_kwargs.setdefault("streaming", True)
+        self.model = ChatOpenAI(**model_kwargs)
 
         # create config
         self.config = RunnableConfig(configurable={"thread_id": str(uuid.uuid4)})
@@ -48,11 +43,11 @@ class AgentState(BaseModel):
 class EmailDraftAgent(AgentBase):
     def __init__(
         self,
-        model_name: str = "gpt-5-nano",
-        streaming: bool = True,
         system_prompt: str = DEFAULT_SYSTEM_PROMPT,
+        **model_kwargs,
     ):
-        super().__init__(model_name=model_name, streaming=streaming)
+        super().__init__(**model_kwargs)
+
         self.first_call: bool = True
         self.system_prompt = system_prompt
 
@@ -85,10 +80,3 @@ class EmailDraftAgent(AgentBase):
         print(response_dict)
         updated_state = AgentState(**response_dict)
         return updated_state
-
-
-"""
-TODO
-- [ ] モデルパラメータをまとめる。 model_paramsにして一気に渡す
-- [ ] 共通クラスは別ファイルに分ける
-"""
