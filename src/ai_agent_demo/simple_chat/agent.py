@@ -5,9 +5,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from ai_agent_demo.common import AgentBase
-
-from .state import SimpleChatState
+from ai_agent_demo.common import AgentBase, BasicMessagesState
 
 DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant."
 
@@ -38,6 +36,7 @@ class SimpleChatAgent(AgentBase):
         """
         super().__init__(**model_kwargs)
         self.system_prompt: str = system_prompt
+        self.first_call: bool = True
 
     def _build_graph(self) -> CompiledStateGraph:
         """Construct and compile the LangGraph with checkpoint support.
@@ -45,30 +44,45 @@ class SimpleChatAgent(AgentBase):
         Returns:
             Compiled LangGraph with InMemorySaver checkpoint mechanism
         """
-        graph = StateGraph(SimpleChatState)
-        graph.add_node(self.call_llm)
-        graph.add_edge(START, self.call_llm.__name__)
-        graph.add_edge(self.call_llm.__name__, END)
+        graph = StateGraph(BasicMessagesState)
+        graph.add_node(self.receive_input)
+        graph.add_edge(START, self.receive_input.__name__)
+        graph.add_edge(self.receive_input.__name__, END)
 
         checkpointer = InMemorySaver()
         return graph.compile(checkpointer=checkpointer)
 
-    async def call_llm(self, state: SimpleChatState) -> dict:
-        """Node function that invokes LLM with conversation history.
-
-        Initializes SystemMessage on first call, appends user message,
-        invokes LLM, and appends AI response to history.
+    async def receive_input(self, state: BasicMessagesState) -> dict:
+        """Process user input and generate AI response.
 
         Args:
-            state: Current state with user_request and chat_history
+            state: Current agent state containing message history.
 
         Returns:
-            Dict with updated chat_history for state merge
+            Dictionary with new AI message to add to state.
         """
-        if state.chat_history is None:
-            state.chat_history = [SystemMessage(self.system_prompt)]
-        state.chat_history.append(HumanMessage(state.user_request))
-        response: AIMessage = await self.model.ainvoke(state.chat_history)
-        state.chat_history.append(response)
-        update_field = {SimpleChatState.CHAT_HISTORY: state.chat_history}
-        return update_field
+        response: AIMessage = await self.model.ainvoke(state.messages)
+        return {BasicMessagesState.MESSAGES: [response]}
+
+    async def call(self, user_query: str):
+        """Handle user query and return updated state.
+
+        Args:
+            user_query: User's input message.
+
+        Returns:
+            Updated BasicMessagesState with conversation history.
+        """
+        messages = []
+        if self.first_call:
+            messages.append(SystemMessage(self.system_prompt))
+            self.first_call = False
+        messages.append(HumanMessage(user_query))
+
+        input_state = {BasicMessagesState.MESSAGES: messages}
+        response_dict = await self.graph.ainvoke(
+            input=input_state,
+            config=self.config,
+        )
+        updated_state = BasicMessagesState(**response_dict)
+        return updated_state

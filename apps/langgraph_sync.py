@@ -1,6 +1,7 @@
 import chainlit as cl
 
-from ai_agent_demo.simple_chat import SimpleChatAgent, SimpleChatState
+from ai_agent_demo.common import BasicMessagesState
+from ai_agent_demo.simple_chat import SimpleChatAgent
 
 AGENT_KEY = "agent_key"
 
@@ -19,18 +20,12 @@ async def on_chat_start() -> None:
 
 
 @cl.on_message
-async def on_message(user_request: cl.Message) -> None:
+async def on_message(user_query: cl.Message) -> None:
     try:
         agent = load_agent()
-        input_state = SimpleChatState(user_request=user_request.content)
-        response_dict = await agent.graph.ainvoke(
-            input=input_state,
-            config=agent.config,
-        )
-        updated_state = SimpleChatState(**response_dict)
-        last_message_content = updated_state.get_last_message_content()
-        user_response = cl.Message(content=last_message_content)
-        await user_response.send()
+        state: BasicMessagesState = await agent.call(user_query.content)
+        last_message_content: str = state.get_last_message_content()
+        await cl.Message(last_message_content).send()
 
     except Exception as e:
         await cl.ErrorMessage(content=repr(e)).send()

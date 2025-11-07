@@ -6,24 +6,20 @@ for conversation history persistence, decoupling state management from UI framew
 Key features:
 - Agent class pattern with dependency injection
 - Checkpoint-based conversation history (InMemorySaver)
-- Pydantic BaseModel for type-safe state management
+- Uses BasicMessagesState for type-safe state management
 - UI framework independent (works with Chainlit, Streamlit, CLI, etc.)
 
 Classes:
     SimpleChatAgent: LangGraph agent with checkpoint mechanism
-    SimpleChatState: Pydantic model for agent state
 
 Example:
-    >>> from ai_agent_demo.simple_chat import SimpleChatAgent, SimpleChatState
+    >>> from ai_agent_demo.simple_chat import SimpleChatAgent
     >>> agent = SimpleChatAgent()
-    >>> input_state = SimpleChatState(user_request="Hello")
-    >>> result = await agent.graph.ainvoke(input_state, config=agent.config)
+    >>> result = await agent.call("Hello")
 """
 
 from .agent import SimpleChatAgent
-from .state import SimpleChatState
 
 __all__ = [
     "SimpleChatAgent",
-    "SimpleChatState",
 ]
