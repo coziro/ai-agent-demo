@@ -25,7 +25,40 @@
 
 ### 進行中のタスク
 
-（現在進行中のタスクはありません）
+#### メール作成エージェントの実装 - Start Date: 2025-11-07
+
+**Purpose:**
+- ユーザーの入力から適切なメール文面を生成するエージェントを実装
+- LangGraphを使ったエージェント実装の学習
+
+**Implementation Approach:**
+- TBD（実装しながら決定）
+
+**Branch:** `feature/email-draft-agent`
+
+**Current Status:**
+- [x] ブランチ作成
+- [ ] エージェントの基本設計
+- [ ] コード実装
+- [ ] テスト
+- [ ] レビュー依頼
+
+**Your Work vs. Claude Code's Work:**
+
+**Your Work (Learning/Review):**
+- エージェントのコード実装（学習目的）
+
+**Claude Code's Work:**
+- ブランチ作成 ✅
+- context.md更新 ✅
+- コードレビュー（実装後）
+
+**Next Steps:**
+1. エージェントの実装を開始（ユーザー作業）
+2. 実装完了後、Claude Codeにレビューを依頼
+
+**Related Files:**
+- TBD
 
 ---
 
