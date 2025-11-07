@@ -1,20 +1,18 @@
 """Agent class implementation with checkpoint-based conversation history."""
 
-import uuid
-
 from langchain.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_core.runnables import RunnableConfig
-from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
+
+from ai_agent_demo.common import AgentBase
 
 from .state import SimpleChatState
 
 DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant."
 
 
-class SimpleChatAgent:
+class SimpleChatAgent(AgentBase):
     """LangGraph agent with checkpoint-based conversation history.
 
     Encapsulates model configuration, graph structure, and checkpoint mechanism
@@ -29,21 +27,17 @@ class SimpleChatAgent:
 
     def __init__(
         self,
-        model_name: str = "gpt-5-nano",
-        streaming: bool = True,
         system_prompt: str = DEFAULT_SYSTEM_PROMPT,
+        **model_kwargs,
     ):
         """Initialize agent with model and checkpoint configuration.
 
         Args:
-            model_name: OpenAI model name (default: "gpt-5-nano")
-            streaming: Enable token streaming (default: True)
             system_prompt: System message for the agent (default: helpful assistant)
+            **model_kwargs: Parameters passed to ChatOpenAI (model, streaming, etc.)
         """
+        super().__init__(**model_kwargs)
         self.system_prompt: str = system_prompt
-        self.config = RunnableConfig(configurable={"thread_id": str(uuid.uuid4())})
-        self.model = ChatOpenAI(model=model_name, streaming=streaming)
-        self.graph: CompiledStateGraph = self._build_graph()
 
     def _build_graph(self) -> CompiledStateGraph:
         """Construct and compile the LangGraph with checkpoint support.
