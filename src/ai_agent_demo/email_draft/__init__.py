@@ -1,5 +1,6 @@
-from .agent import EmailDraftAgent
+from .agent import AgentState, EmailDraftAgent
 
 __all__ = [
+    "AgentState",
     "EmailDraftAgent",
 ]

@@ -1,7 +1,6 @@
 import chainlit as cl
 
-from ai_agent_demo.common import BasicMessagesState
-from ai_agent_demo.email_draft import EmailDraftAgent
+from ai_agent_demo.email_draft import AgentState, EmailDraftAgent
 
 AGENT_KEY = "agent_key"
 
@@ -23,7 +22,7 @@ async def on_chat_start() -> None:
 async def on_message(user_query: cl.Message) -> None:
     try:
         agent = load_agent()
-        state: BasicMessagesState = await agent.call(user_query.content)
+        state: AgentState = await agent.call(user_query.content)
         last_message_content: str = state.get_last_message_content()
         await cl.Message(last_message_content).send()
 
